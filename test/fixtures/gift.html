@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>咕咕镇</title>
+<meta name="keywords" content="web小游戏,策略小游戏" />
+<meta name="description" content="一个打怪升级加点换装备的纯web小游戏。" />
+<link rel="stylesheet" type="text/css" href="ys/zui/css/zui.min.css" />
+<link rel="stylesheet" type="text/css" href="ys/style_fyg210226.css" />
+<style type="text/css">
+
+</style>
+<script type="text/javascript" src="ys/zui/lib/jquery/jquery.js"></script>
+<script type="text/javascript" src="ys/zui/js/zui.min.js"></script>
+
+
+</head>
+<body>
+<div style="width:1200px;margin: 0 auto;">
+
+<div class="row">
+	<nav class="navbar navbar-default" role="navigation">
+	<ul class="nav navbar-nav">
+    <li><a href="fyg_index.php" style="color:#FF3399;"><i class="icon icon-user"></i> redis</a></li>
+		<li><a href="fyg_pk.php"><i class="icon icon-flag"></i> 争夺战场</a></li>
+        <li><a href="fyg_equip.php"><i class="icon icon-credit"></i> 我的角色</a></li>
+        <li><a href="fyg_wish.php"><i class="icon icon-adjust"></i> 许愿池</a></li>
+        <li><a href="fyg_beach.php"><i class="icon icon-gift"></i> 海滩收获</a></li>
+        <li><a href="fyg_gift.php"><i class="icon icon-coffee"></i> 好运奖励</a></li>
+
+        <li><a href="fyg_shop.php"><i class="icon icon-diamond"></i> 道具商店</a></li>	</ul>
+	</nav>
+</div>
+
+<div class="row">
+<div class="row">
+	<div class="panel panel-primary">
+	<div class="panel-heading">
+	奖池
+	</div>
+	<div id="giftinfo" class="panel-body">
+        <div class="btn-group">
+        <h2 class="text-primary">今日奖池中共有 114514贝壳 + 24星沙 + 48装备 + 1卡片 + 5.28%光环点数</h2>
+        <h4>我的基本数值：32800贝壳 4星沙 5件装备 1张卡片 1.20%光环点数 </h4>
+        </div>
+	</div>
+	</div>
+</div>
+
+
+<div class="row">
+	<div class="panel panel-primary">
+	<div class="panel-heading">
+	抽奖
+	</div>
+	<div id="gifsall" class="panel-body load-indicator">
+        加载中...
+	</div>
+	</div>
+</div>
+
+
+<div class="row">
+<div class="panel panel-info">
+<div class="panel-heading">
+	说明
+</div>
+<div class="panel-body">
+    鼠标点击任意一张牌，获得该牌种基本数值乘以牌面倍数的奖励（已经翻开的卡如果是光环，数值会小于实际增长数值，因为这个数值是按照“增长后的光环数值”算出来的）<br>
+    如：抽取到一张“5.5倍贝壳”的牌，我的基础奖励为“32800贝壳”，那么获得 180400 贝壳<br>
+    基本数值作为公式计算用途，如果没有抽到对应的牌，是没有基础奖励的<br>
+    基本数值算法：贝壳=(1000+争夺等级*200)，星沙=(1+争夺等级/50)，装备=(2+争夺等级/50)，卡片=1，光环点数=(280%-我的光环%)/100<br>
+    光环小于100%时，如果抽到光环，获得双倍增长。
+</div>
+</div>
+</div>
+
+<script language="JavaScript">
+$(function(){
+    gifp();
+})
+function gifp(){
+	$.ajax({
+		type: "POST",
+		url: "fyg_read.php",
+		data: "f=10",
+		success: function(msg){
+			$("#gifsall").html(msg);
+        }
+    });
+}
+function giftop(id){
+    $("#gifsall").toggleClass("loading");
+    $.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=8&id="+id+"&safeid=aaaaaa",
+		success: function(msg){
+            $("#mymessagehtml").html(msg);
+            $("#mymessage").modal('show', 'fit');
+            gifp();
+            $("#gifsall").toggleClass("loading");
+        }
+	});
+}
+function gx_gt(id){
+    $("#gifsall").toggleClass("loading");
+    $.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=8&gx=1&id="+id+"&safeid=aaaaaa",
+		success: function(msg){
+            $("#mymessagehtml").html(msg);
+            $("#mymessage").modal('show', 'fit');
+            gifp();
+            $("#gifsall").toggleClass("loading");
+        }
+	});
+}
+
+</script>
+
+</div>
+
+<div class="modal fade load-indicator" id="mymessage">
+  <div class="modal-dialog" style="width:500px;">
+    <div class="modal-content">
+        <div class="modal-body fyg_f14" id="mymessagehtml">
+        test
+        </div>
+      <div class="modal-footer"><button type="button" class="btn btn-block" data-dismiss="modal">关闭</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="row fyg_lh60 fyg_tc">
+
+<a class="label label-primary label-outline" href="fyg_login.php?m=out">退出登录状态</a>
+<a class="label label-outline" href="fyg_ulog.php">更新日志</a>
+
+</div>
+
+
+
+
+</div>
+
+<script language="JavaScript">
+	$(function(){
+		$('[data-toggle="tooltip"]').tooltip();
+	});
+</script>
+</body></html>

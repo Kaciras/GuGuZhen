@@ -10,6 +10,8 @@ setup(
 	install_requires=[
 		"httpx",
 		"lxml",
+		"pytest",
+		"pytest-httpx",
 		"python-dotenv",
 	],
 )
