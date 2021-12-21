@@ -1,6 +1,16 @@
 from guguzhen.api import GuGuZhen
 
 
+def test_get_safeid(httpx_mock):
+	with open("fixtures/index.html", encoding="utf8") as fp:
+		httpx_mock.add_response(html=fp.read())
+
+	api = GuGuZhen({})
+	api.fetch_safeid()
+
+	assert api.safe_id == "aaaaaa"
+
+
 def test_get_gift_pool(httpx_mock):
 	with open("fixtures/gift.html", encoding="utf8") as fp:
 		httpx_mock.add_response(html=fp.read())

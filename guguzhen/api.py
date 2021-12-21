@@ -112,7 +112,7 @@ class GuGuZhen:
 
 	def fetch_safeid(self):
 		r = self.client.get("/fyg_index.php")
-		self.safe_id = _sidp.match(r.text).group(1)
+		self.safe_id = _sidp.search(r.text).group(1)
 
 	def get_page(self, path):
 		r = self.client.get(path)

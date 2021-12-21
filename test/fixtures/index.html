@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>咕咕镇</title>
+<meta name="keywords" content="web小游戏,策略小游戏" />
+<meta name="description" content="一个打怪升级加点换装备的纯web小游戏。" />
+<link rel="stylesheet" type="text/css" href="ys/zui/css/zui.min.css" />
+<link rel="stylesheet" type="text/css" href="ys/style_fyg210226.css" />
+<style type="text/css">
+
+</style>
+<script type="text/javascript" src="ys/zui/lib/jquery/jquery.js"></script>
+<script type="text/javascript" src="ys/zui/js/zui.min.js"></script>
+
+
+</head>
+<body>
+<div style="width:1200px;margin: 0 auto;">
+
+<div class="row">
+	<nav class="navbar navbar-default" role="navigation">
+	<ul class="nav navbar-nav">
+    <li><a href="fyg_index.php" style="color:#FF3399;"><i class="icon icon-user"></i> redis</a></li>
+		<li><a href="fyg_pk.php"><i class="icon icon-flag"></i> 争夺战场</a></li>
+        <li><a href="fyg_equip.php"><i class="icon icon-credit"></i> 我的角色</a></li>
+        <li><a href="fyg_wish.php"><i class="icon icon-adjust"></i> 许愿池</a></li>
+        <li><a href="fyg_beach.php"><i class="icon icon-gift"></i> 海滩收获</a></li>
+        <li><a href="fyg_gift.php"><i class="icon icon-coffee"></i> 好运奖励</a></li>
+        
+        <li><a href="fyg_shop.php"><i class="icon icon-diamond"></i> 道具商店</a></li>	</ul>
+	</nav>
+</div>
+
+<div class="row">
+<div class="row">
+<div class="col-md-3">
+	<div class="panel panel-primary">
+	<div class="panel-heading">
+	统计信息
+	</div>
+	<div id="userd" class="panel-body">
+        载入中……
+	</div>
+	</div>
+</div>
+<div class="col-md-9">
+    
+    <div class="panel panel-primary">
+	<div class="panel-heading">
+	段位战绩
+	</div>
+	<div class="panel-body">
+    <div class="row"><div class="col-md-4">
+        <div class="alert alert-danger fyg_lh30">我的段位<span class="pull-right fyg_f24"> AA</span></div>
+        <p class="with-padding hl-gray">本月总战斗<span class="pull-right"> 32胜 / 38</span></p>
+        <p class="with-padding hl-gray">对NPC战斗<span class="pull-right"> 25胜 / 31</span></p>
+        <p class="with-padding hl-gray">战胜NPC最大等级<span class="pull-right"> 449级</span></p>
+        <p class="with-padding hl-gray">对玩家战斗<span class="pull-right"> 7胜 / 7</span></p>
+    </div><div class="col-md-8">
+            <p><strong>入门指引</strong></p>
+            <p>[1]请先去“好运奖励”抽取每天的免费奖励。</p>
+            <p>[2]去“我的角色”-“角色卡片”选择装备你的卡片，并给属性加点，注意加点只能升不能降</p>
+            <p>[3]去“我的角色”-“光环天赋”根据你的光环数值和技能位，选择你的天赋技能。</p>
+            <p>[4]去“海滩收获”拾取你需要的装备，不要的一键清理掉</p>
+            <p>[5]去“我的角色”-“武器装备”里把在海滩拾取的装备，装备到身上。</p>
+            <p>[6]现在可以去“争夺战场”PVE/PVP获得奖励了。</p>
+            <p>注意：卡片升级通过下方“我的角色”-“属性加点”，投入贝壳升级。</p>
+    </div>
+    </div>
+    <div class="row">
+    <p><button type="button" class="btn btn-block" data-toggle="collapse" data-target="#smdw">详细说明<i class="icon icon-caret-down"></i></button></p>
+        <div class="collapse" id="smdw"><div class="bg-info with-padding">
+        段位信息见后续更新。<br>
+        </div></div>
+    </div>
+	</div>
+	</div>
+    
+	<div class="panel panel-primary">
+	<div class="panel-heading">
+	修改游戏名
+	</div>
+	<div class="panel-body">
+    <div class="input-group">
+        <input id="mdnewname" type="text" class="form-control" placeholder="redis" disabled>
+        <span class="input-group-btn"><button class="btn btn-default" type="button" onclick="upnewname()">确定修改</button></span>
+    </div>
+    <p class="text-muted">请注意用户名只可以使用[中文][日文][数字][大小写字母]，长度为4-12个字符(每个汉字字母数字均计1个字符) </p>
+	</div>
+	</div>
+</div>
+</div>
+	
+<div class="row">
+<div class="panel panel-info">
+<div class="panel-heading">
+	说明
+</div>
+<div class="panel-body">
+    
+</div>
+</div>
+</div>
+
+
+
+<script language="JavaScript">
+$(function(){
+    userdup();
+    cmnum();
+})
+function cmnum(){
+	$.ajax({
+		type: "POST",
+		url: "fyg_read.php",
+		data: "f=11",
+		success: function(msg){
+			$("#cmnum").html(msg);
+        }
+    });
+}
+function userdup(){
+	$.ajax({
+		type: "POST",
+		url: "fyg_read.php",
+		data: "f=13",
+		success: function(msg){
+			$("#userd").html(msg);
+        }
+    });
+}
+function cmnumne(){
+    var herft='<p>你可以</p><div class="input-group"><input id="cmaxnum" type="text" class="form-control"><span class="input-group-btn"><button class="btn btn-success" type="button" onclick="cmax()">投入新的筹码</button></span></div><p>或者</p><p><button class="btn btn-success" type="button" onclick="cmax0()">仅提取所有筹码为卡片经验</button></p><p>注意：投入新筹码也会将原有筹码提取为经验。</p>';
+    $("#mymessagehtml").html(herft);
+    $("#mymessage").modal('show', 'fit');
+}
+function cmax0(){
+    $("#cmaxnum").val('ab');
+    cmax();
+}
+function cmax(){
+	$.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=10&num="+$("#cmaxnum").val()+"&safeid=aaaaaa",
+		success: function(msg){
+            $("#mymessagehtml").html(msg); 
+            $("#mymessage").modal('show', 'fit');
+            cmnum();
+            userdup();
+		}
+	});
+}
+function upnewname(){
+	$.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=6&name="+$("#mdnewname").val()+"&safeid=aaaaaa",
+		success: function(msg){
+        if(msg=="ok"){
+            $("#mymessagehtml").html('名称更改完成'); 
+            $("#mymessage").modal('show', 'fit');
+        }else{
+            $("#mymessagehtml").html(msg); 
+            $("#mymessage").modal('show', 'fit'); 
+        }
+		}
+	});
+}
+function dadhelpme(){
+    var herft='<p><div class="input-group"><input id="dhm_tofx" type="text" class="form-control" placeholder="输入需要的星沙数量"><span class="input-group-btn"><button class="btn btn-success" type="button" onclick="tofx()">获取星沙</button></span></div></p>';
+    $("#mymessagehtml").html(herft);
+    $("#mymessage").modal('show', 'fit');
+}
+function tofx(){
+    $("#mymessage").toggleClass("loading");
+	$.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=15&lm=2&num="+$("#dhm_tofx").val()+"&safeid=aaaaaa",
+		success: function(msg){
+            $("#mymessagehtml").html(msg); 
+            $("#mymessage").modal('show', 'fit');
+            userdup();
+        $("#mymessage").toggleClass("loading");
+		}
+	});
+}
+</script>
+
+</div>
+
+<div class="modal fade load-indicator" id="mymessage">
+  <div class="modal-dialog" style="width:500px;">
+    <div class="modal-content">
+        <div class="modal-body fyg_f14" id="mymessagehtml">
+        test
+        </div>
+      <div class="modal-footer"><button type="button" class="btn btn-block" data-dismiss="modal">关闭</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="row fyg_lh60 fyg_tc">
+    
+<a class="label label-primary label-outline" href="fyg_login.php?m=out">退出登录状态</a>
+<a class="label label-outline" href="fyg_ulog.php">更新日志</a>   
+
+</div>
+
+
+
+
+</div>
+
+<script language="JavaScript">
+	$(function(){
+		$('[data-toggle="tooltip"]').tooltip();
+	});
+</script>
+</body></html>
