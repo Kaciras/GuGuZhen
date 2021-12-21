@@ -2,7 +2,7 @@ import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
-
+from enum import Enum
 from httpx import Cookies, Client
 from lxml import etree
 
@@ -19,15 +19,48 @@ _HEADERS = {
 
 _gp = re.compile(r"今日奖池中共有 (\d+)贝壳 \+ (\d+)星沙 \+ (\d+)装备 \+ (\d+)卡片 \+ ([0-9.]+)%光环点数")
 _cp = re.compile(r"\s*([^+]+)\+([0-9.]+)\*(\d+)%")
-_sidp = re.compile(r"&safeid=([0-9a-z]+)")
-_gxp = re.compile(r"消耗 (\d+) 星沙")
+_sidp = re.compile(r"&safeid=([0-9a-z]+)", re.MULTILINE)
+_gxp = re.compile(r"消耗 (\d+) 星沙", re.MULTILINE)
+
+
+class ReadType(Enum):
+	Beach = 1		 # 海滩装备
+	Bag = 2			 # 海滩背包
+	Talent = 5		 # 光环天赋
+	Repository = 7   # 武器装备
+	CardList = 8     # 角色卡片列表
+	Character = 9    # 我的战斗信息
+	Gifts = 10       # 抽奖
+	Chips = 11		 # 筹码（不知道啥用）
+	PK = 12			 # 争夺战场
+	Statistics = 13  # 统计信息
+	CardDetail = 18  # 卡片详情
+	Wish = 19		 # 许愿池
+
+
+class ClickType(Enum):
+	OpenGift = 8	 # 点好运奖励的卡片
+	Pillage = 16	 # 搜刮资源
+
+
+class VS(Enum):
+	Creeps = 1  # 打野
+	Player = 2  # 打人
+
+
+_z2e = {
+	"贝壳": "conch",
+	"星沙": "sand",
+	"装备": "equipment",
+	"卡片": "cards",
+	"光环": "halo",
+}
 
 
 class LimitReachedError(Exception):
 
-	def __init__(self, sand=None):
+	def __init__(self):
 		super().__init__("次数已达上限")
-		self.sand = sand
 
 
 @dataclass(eq=False, slots=True)
@@ -53,6 +86,10 @@ class CardInfo:
 	base: float
 	ratio: int
 
+	@property
+	def value(self):
+		return self.base * self.ratio
+
 
 class GuGuZhen:
 
@@ -77,9 +114,33 @@ class GuGuZhen:
 		r = self.client.get("/fyg_index.php")
 		self.safe_id = _sidp.match(r.text).group(1)
 
+	def get_page(self, path):
+		r = self.client.get(path)
+		r.raise_for_status()
+		return etree.HTML(r.text)
+
+	def fyg_read(self, type_, **kwargs):
+		kwargs["f"] = str(type_.value)
+		r = self.client.post("/fyg_read.php", data=kwargs)
+		r.raise_for_status()
+		return etree.HTML(r.text)
+
+	def fyg_click(self, form):
+		form["safeid"] = self.safe_id
+		r = self.client.post("/fyg_click.php", data=form)
+		r.raise_for_status()
+		return r.text
+
+	def fyg_v_intel(self, target,):
+		form = {
+			"id": target,
+			"safeid": self.safe_id
+		}
+		self.client.post("/fyg_v_intel.php", data={"form": form})
+
 	def get_gift_pool(self):
-		r = self.client.get("/fyg_gift.php")
-		el = etree.HTML(r.text).xpath('//*[@id="giftinfo"]/div/h2')
+		html = self.get_page("/fyg_gift.php")
+		el = html.xpath('//*[@id="giftinfo"]/div/h2')
 		match = _gp.match(el[0].text)
 
 		return GiftInfo(int(match.group(1)),
@@ -89,39 +150,37 @@ class GuGuZhen:
 						float(match.group(5)))
 
 	def get_gift_cards(self):
-		r = self.client.post("/fyg_read.php", data={"form": {"f": "10"}})
-		cards, index = [], 0
+		html = self.fyg_read(ReadType.Gifts)
+		cards, index = {}, 0
 
-		for el in etree.HTML(r.text).iter():
+		for el in html.iter():
 			if el.tag != "button":
 				continue
 			index += 1
 			match = _cp.match(el.text)
 			if match is None:
 				continue
-			info = CardInfo(match.group(1), float(match.group(2)), int(match.group(3)))
-			cards.append(info)
+			info = CardInfo(_z2e[match.group(1)], float(match.group(2)), int(match.group(3)))
+			cards[index] = info
 
 		return cards
 
-	def open_gift(self, index, sand=False):
+	def open_gift(self, index, use_sand=False):
 		form = {
-			"safeid": self.safe_id,
 			"c": "8",
-			"id": str(index),
+			"id": index,
 		}
-
-		if sand:
+		if use_sand:
 			form["gx"] = "1"
 
-		r = self.client.post("/fyg_click.php", data={"form": form})
-		match = _gxp.match(r.text)
+		res_text = self.fyg_click(form)
+
+		match = _gxp.search(res_text)
 		if match:
-			raise LimitReachedError(int(match.group(1)))
+			raise LimitReachedError()
 
 	def get_version(self):
-		r = self.client.get("/fyg_ulog.php")
-		html = etree.HTML(r.text)
+		html = self.get_page("/fyg_ulog.php")
 		return html.xpath("/html/body/div/div[2]/div/div/div[2]/div[1]/h3")[0].text
 
 	def get_pk_info(self):
