@@ -37,7 +37,7 @@ class GetGift:
 
 	def _refresh(self, client):
 		self._opened = client.get_gift_cards()
-		self._remaining = copy.copy(self._opened)
+		self._remaining = copy.copy(self._pool)
 
 		for gift in self._opened.values():
 			self._remaining[gift.type] -= gift.value
@@ -57,8 +57,8 @@ class GetGift:
 		for index in range(1, 13):
 			if index in self._opened:
 				continue
-			require = 2 + len(self._opened) * 2
-			self._open_ex(client, index, require)
+			require = 2 + (2 ** len(self._opened))
+			self._handle_rules(client, index, require)
 
 			if len(self._opened) == count:
 				break
@@ -67,7 +67,7 @@ class GetGift:
 
 		logging.info(f"好运奖励 - 翻了{prev - count}张卡")
 
-	def _open_ex(self, client, index, require):
+	def _handle_rules(self, client, index, require):
 		for rule in self.sand_usage:
 			if self._pool[rule.type] < rule.value:
 				continue
