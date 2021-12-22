@@ -1,29 +1,16 @@
-import logging
-import sys
-from typing import List
 import copy
-from guguzhen.api import LimitReachedError, GiftInfo
+import logging
+from dataclasses import dataclass
+from typing import List
 
 
-class CheckVersion:
-
-	def __init__(self, date):
-		self.date = date
-
-	def run(self, client):
-		current = client.get_version()
-		if current != self.date:
-			logging.warning(f"版本不匹配，要求={self.date}，当前={current}")
-			sys.exit()
-
-
+@dataclass(eq=False, slots=True)
 class GiftSandRule:
 	"""额外翻卡规则，当奖池中剩余的奖励大于指定值时使用星沙追加翻卡"""
 
-	def __init__(self, type_, value, limit):
-		self.type = type_   # 奖励类型
-		self.value = value  # 奖池剩余大于该值时尝试翻卡
-		self.limit = limit  # 如果需要的星沙大于该值则不翻
+	type: str  # 奖励类型
+	value: float  # 奖池剩余大于该值时尝试翻卡
+	limit: int  # 如果需要的星沙大于该值则不翻
 
 
 class GetGift:
