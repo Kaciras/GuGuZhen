@@ -1,5 +1,5 @@
-import copy
 import logging
+from copy import copy
 from dataclasses import dataclass
 from typing import List
 
@@ -18,46 +18,59 @@ class GetGift:
 	def __init__(self, sand_usage: List[GiftSandRule] = ()):
 		self.sand_usage = sand_usage
 
-		self._remaining = None
-		self._pool = None
-		self._opened = None
+	def run(self, api):
+		pool = _GiftContext(api)
 
-	def _refresh(self, client):
-		self._opened = client.get_gift_cards()
-		self._remaining = copy.copy(self._pool)
-
-		for gift in self._opened.values():
-			self._remaining[gift.type] -= gift.value
-
-	def _open(self, client, index, use_sand):
-		client.open_gift(index, use_sand)
-		self._refresh(client)
-
-	def run(self, client):
-		self._pool = client.get_gift_pool()
-		self._refresh(client)
-
-		prev = count = len(self._opened)
+		prev = count = len(pool.opened)
 		if count == 0:
-			self._open(client, 1, False)
+			pool.open(1, False)
 
 		for index in range(1, 13):
-			if index in self._opened:
+			if index in pool.opened:
 				continue
-			require = 2 + (2 ** len(self._opened))
-			self._handle_rules(client, index, require)
 
-			if len(self._opened) == count:
+			self._handle_rules(pool, index)
+
+			if len(pool.opened) == count:
 				break
 
-			count = len(self._opened)
+			count = len(pool.opened)
 
 		logging.info(f"好运奖励 - 翻了{prev - count}张卡")
 
-	def _handle_rules(self, client, index, require):
+	def _handle_rules(self, pool, index):
 		for rule in self.sand_usage:
-			if self._pool[rule.type] < rule.value:
+			if pool.cost > rule.limit:
 				continue
-			if require > rule.limit:
+			if pool[rule.type] < rule.value:
 				continue
-			self._open(client, index, True)
+			pool.open(index, True)
+
+
+class _GiftContext:
+
+	def __init__(self, api):
+		self.api = api
+		self.remaining = None
+		self.opened = None
+
+		self.total = api.get_gift_pool()
+		self._refresh()
+
+	def __getitem__(self, item):
+		return self.remaining[item]
+
+	@property
+	def cost(self):
+		return 2 + (2 ** len(self.opened))
+
+	def open(self, index, use_sand):
+		self.api.open_gift(index, use_sand)
+		self._refresh()
+
+	def _refresh(self):
+		self.opened = self.api.get_gift_cards()
+		self.remaining = copy(self.total)
+
+		for gift in self.opened.values():
+			self.remaining[gift.type] -= gift.value
