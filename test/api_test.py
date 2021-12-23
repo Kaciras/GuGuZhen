@@ -1,4 +1,13 @@
 from guguzhen.api import GuGuZhen
+from guguzhen.helper import get_equipments
+
+
+def test_get_repository(httpx_mock):
+	with open("fixtures/repository.html", encoding="utf8") as fp:
+		httpx_mock.add_response(html=fp.read())
+
+	api = GuGuZhen({})
+	get_equipments(api)
 
 
 def test_get_safeid(httpx_mock):
