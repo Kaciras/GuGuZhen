@@ -2,6 +2,7 @@ import json
 import re
 from enum import Enum
 from pathlib import Path
+from typing import Literal
 
 from httpx import Cookies, Client
 from lxml import etree
@@ -16,6 +17,8 @@ _HEADERS = {
 	"X-Requested-With": "XMLHttpRequest",
 	"Accept-Language": "zh-CN,en-US;q=0.7,en;q=0.3",
 }
+
+Role = Literal["梦", "默", "薇", "艾", "冥", "琳", "伊", "命", "野怪"]
 
 
 class LimitReachedError(Exception):
@@ -47,8 +50,10 @@ class VS(Enum):
 
 
 class ClickType(Enum):
-	OpenGift = 8	 # 点好运奖励的卡片
-	Pillage = 16	 # 搜刮资源
+	OpenGift = 8	 	# 点好运奖励的卡片
+	RefreshBeach = 12   # 强制刷新海滩，每次 5 星沙
+	Pillage = 16	 	# 搜刮资源
+	ClearBeach = 20	 	# 批量清理沙滩
 
 # @formatter:on
 

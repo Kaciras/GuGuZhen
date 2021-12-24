@@ -4,6 +4,8 @@ import time
 from .base import FYGClient
 from .character import *
 from .gift import *
+from .pk import *
+from .wish import *
 
 
 class GuGuZhen(FYGClient):
@@ -18,6 +20,14 @@ class GuGuZhen(FYGClient):
 	def get_version(self):
 		html = self.get_page("/fyg_ulog.php")
 		return html.xpath("/html/body/div/div[2]/div/div/div[2]/div[1]/h3")[0].text
+
+	@property
+	def pk(self):
+		return PKApi(self)
+
+	@property
+	def wish(self):
+		return WishApi(self)
 
 	@property
 	def gift(self):

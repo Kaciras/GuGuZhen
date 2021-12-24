@@ -12,14 +12,6 @@ GiftType = Literal["贝壳", "星沙", "装备", "卡片", "光环"]
 
 
 @dataclass(eq=False, slots=True)
-class PKInfo:
-	rank: str
-	progress: int
-	fatigue: int
-	creepsEnhance: int
-
-
-@dataclass(eq=False, slots=True)
 class CardInfo:
 	type: GiftType
 	base: float

@@ -1,5 +1,30 @@
-from guguzhen.api import GuGuZhen
-from guguzhen.helper import get_equipments
+from guguzhen.api import GuGuZhen, PKRank
+
+
+def test_pillage(httpx_mock):
+	with open("fixtures/ClickPillage.html", encoding="utf8") as fp:
+		httpx_mock.add_response(html=fp.read())
+
+	api = GuGuZhen({})
+	api.safe_id = ""
+	trophy = api.pk.pillage()
+
+	assert trophy.value == 23713
+	assert trophy.base == 18500
+	assert trophy.range == (0.8, 1.2)
+
+
+def test_get_pk_info(httpx_mock):
+	with open("fixtures/ReadPK.html", encoding="utf8") as fp:
+		httpx_mock.add_response(html=fp.read())
+
+	api = GuGuZhen({})
+	info = api.pk.get_info()
+
+	assert info.rank == PKRank.AA
+	assert info.power == 100
+	assert info.progress == 98
+	assert info.creepsEnhance == 2
 
 
 def test_get_repository(httpx_mock):

@@ -11,7 +11,7 @@ _xp = re.compile(r"fyg_colpz0(\d)bg")
 
 
 @dataclass(eq=False, slots=True)
-class Equipment:
+class ItemsInfo:
 	size: int  # 背包格子数
 	backpacks: list  # 背包物品
 	repository: list  # 仓库物品
@@ -23,6 +23,14 @@ class Item:
 	grade: int
 	level: int
 	name: str
+
+
+@dataclass(eq=False, slots=True)
+class Equipment:
+	weapon: Item
+	bracelet: Item
+	armor: Item
+	accessory: Item
 
 
 def _parse_equipments_slots(buttons):
@@ -55,7 +63,6 @@ class CharacterApi:
 		"""我的战斗信息"""
 		html = self.api.fyg_read(ReadType.Character)
 
-
 	def get_repository(self):
 		"""武器装备"""
 		html = self.api.fyg_read(ReadType.Repository)
@@ -68,8 +75,7 @@ class CharacterApi:
 		buttons = html.xpath("/html/body/div[2]/div/button")
 		repository = _parse_equipments_slots(buttons)
 
-		return Equipment(size, backpacks, repository)
+		return ItemsInfo(size, backpacks, repository)
 
 	def get_cards(self):
 		"""角色卡片列表"""
-
