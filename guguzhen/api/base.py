@@ -50,6 +50,10 @@ class VS(Enum):
 
 
 class ClickType(Enum):
+	PickUp = 1			# 获取沙滩上的装备
+	SetHalo = 4			# 保存光环天赋
+	SwitchCard = 5		# 装备卡片
+	Throw = 7			# 丢弃到沙滩
 	OpenGift = 8	 	# 点好运奖励的卡片
 	RefreshBeach = 12   # 强制刷新海滩，每次 5 星沙
 	Pillage = 16	 	# 搜刮资源
