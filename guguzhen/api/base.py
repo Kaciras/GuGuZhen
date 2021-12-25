@@ -79,7 +79,12 @@ class FYGClient:
 		except FileNotFoundError:
 			cookies = Cookies(login_info)
 
-		self.client = Client(headers=_HEADERS, base_url=host, cookies=cookies)
+		self.client = Client(
+			http2=True,
+			headers=_HEADERS,
+			base_url=host,
+			cookies=cookies
+		)
 
 	def _check_safe_id(self):
 		if self.safe_id is None:

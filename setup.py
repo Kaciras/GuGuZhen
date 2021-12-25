@@ -8,7 +8,7 @@ setup(
 	platforms='any',
 	python_requires='>=3.10',
 	install_requires=[
-		"httpx",
+		"httpx[http2]",
 		"lxml",
 		"pytest",
 		"pytest-httpx",
