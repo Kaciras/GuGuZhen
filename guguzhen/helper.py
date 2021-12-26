@@ -1,56 +1,32 @@
-import re
-from dataclasses import dataclass
+from colorama import Fore
 
-from lxml import etree
+from guguzhen.api import GuGuZhen
 
-from guguzhen.api import ReadType
-
-lvp = re.compile(r">(\d+)</span> (.+)")
-id_pkg = re.compile(r"(\d+)','Lv.(\d+) ([^']+)")
-
-
-@dataclass(eq=False, slots=True)
-class Equipment:
-	size: int  # 背包格子数
-	backpacks: list  # 背包物品
-	repository: list  # 仓库物品
+_color_map = (
+	None,
+	Fore.LIGHTBLACK_EX,
+	Fore.LIGHTBLUE_EX,
+	Fore.LIGHTGREEN_EX,
+	Fore.LIGHTYELLOW_EX,
+	Fore.RED
+)
 
 
-@dataclass(eq=False, slots=True)
-class Item:
-	id: int
-	level: int
-	name: str
+def _do_print_item(item):
+	c = _color_map[item.grade]
+	print(f"{c}{item.id} - Lv.{item.level} {item.name}{Fore.RESET}")
 
 
-def get_equipments(api):
-	html = api.fyg_read(ReadType.Repository)
-	html = etree.HTML(html)
+def print_equipments(api: GuGuZhen):
+	items = api.character.get_repository()
+	print("武器装备信息：")
+	print(f"背包格子数 = {items.size}")
 
-	buttons = html.xpath("/html/body/div[1]/div/button")
-	size = len(buttons)
-	backpacks = _parse_equipments_slots(buttons)
+	print("\n[背包]")
+	for item in items.backpacks:
+		_do_print_item(item)
 
-	buttons = html.xpath("/html/body/div[2]/div/button")
-	repository = _parse_equipments_slots(buttons)
+	print("\n[仓库]")
+	for item in items.repository:
+		_do_print_item(item)
 
-	return Equipment(size, backpacks, repository)
-
-
-def _parse_equipments_slots(buttons):
-	buttons = filter(lambda x: x.get("onclick"), buttons)
-	return list(map(_parse_button, buttons))
-
-
-def _parse_button(button):
-	click = button.get("onclick")
-
-	match = id_pkg.search(click)
-	if match:
-		id_, level, name = match.groups()
-		return Item(int(id_), int(level), name)
-
-	id_ = int(click[5:-1])
-	match = lvp.search(button.get("title"))
-	level, name = match.groups()
-	return Item(id_, int(level), name)

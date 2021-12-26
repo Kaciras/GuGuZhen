@@ -8,6 +8,7 @@ setup(
 	platforms='any',
 	python_requires='>=3.10',
 	install_requires=[
+		"colorama",
 		"httpx[http2]",
 		"lxml",
 		"pytest",
