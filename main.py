@@ -1,36 +1,43 @@
+import logging
 import os
-import time
 
 import dotenv
-from guguzhen.strategy import *
+import fire
+
 from guguzhen.api import GuGuZhen
+from guguzhen.helper import print_cards, print_equipments
+from play import actions
 
 dotenv.load_dotenv()
-
-
-def play(actions):
-	api = GuGuZhen(cookies)
-	api.fetch_safeid()
-
-	for action in actions:
-		action.run(api)
-		time.sleep(2)
-
-	api.save_cookies()
-	logging.info("Completed.")
-
 
 cookies = {
 	"fyg2019_gameuid": os.getenv("UID"),
 	"fyg2019_gamepw": os.getenv("PW"),
 }
 
-acts = [
-	# CheckVersion("2021/10/20"),
-	GetGift([
-		GiftSandRule("halo", 5, 1)
-	])
-]
+
+class GuGuZhenCli:
+
+	@staticmethod
+	def items():
+		"""查看卡片和装备"""
+		api = GuGuZhen(cookies)
+		print_cards(api)
+		print_equipments(api)
+
+	@staticmethod
+	def play():
+		"""运行自动游戏脚本"""
+		api = GuGuZhen(cookies)
+		api.fetch_safeid()
+
+		for action in actions:
+			api.rest()
+			action.run(api)
+
+		api.save_cookies()
+		logging.info("Completed.")
+
 
 if __name__ == '__main__':
-	play(acts)
+	fire.Fire(GuGuZhenCli)

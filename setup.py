@@ -9,6 +9,7 @@ setup(
 	python_requires='>=3.10',
 	install_requires=[
 		"colorama",
+		"fire",
 		"httpx[http2]",
 		"lxml",
 		"pytest",
