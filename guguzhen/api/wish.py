@@ -3,11 +3,13 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from guguzhen.api import ReadType
-from .base import FYGClient
+from .base import FYGClient, ClickType
 
-_WishValues = namedtuple("WishValues", [
-	"强化背包", "每日海滩出产装备", "对玩家战斗进度保护",
-	"对野怪战斗进度保护", "强化搜刮奖励经验", "强化搜刮奖励贝壳",
+# 懒得翻译成英文了
+_Buffers = namedtuple("WishValues", [
+	"强化背包", "每日海滩出产装备",
+	"对玩家战斗进度保护", "对野怪战斗进度保护",
+	"强化搜刮奖励经验", "强化搜刮奖励贝壳",
 
 	"战斗用生命药水", "战斗用护盾药水",
 
@@ -19,10 +21,10 @@ _WishValues = namedtuple("WishValues", [
 
 @dataclass(eq=False, slots=True)
 class WishInfo:
-	expiration: datetime
-	cost: int
-	point: int
-	buffers: _WishValues
+	expiration: datetime  # 愿望有效期
+	cost: int			  # 下一次许愿需要的贝壳
+	point: int			  # 下一次的愿望的点数
+	buffers: _Buffers	  # 当前增益
 
 
 class WishApi:
@@ -31,13 +33,21 @@ class WishApi:
 		self.api = api
 
 	def get_info(self):
+		"""查询许愿池"""
 		text = self.api.fyg_read(ReadType.Wish)
 		xy_arr = text.split("#")
 
 		return WishInfo(
-			datetime.strptime(xy_arr[2], ""),
+			datetime.strptime(xy_arr[2], "%Y/%m/%d %H:%M:%S"),
 			int(xy_arr[0]),
 			int(xy_arr[1]),
-			_WishValues(*map(int, xy_arr[3:]))
+			_Buffers(*map(int, xy_arr[3:]))
 		)
 
+	def wish(self):
+		"""许愿！"""
+		self.api.fyg_click(ClickType.Wish)
+
+	def shuffle(self):
+		"""重随许愿点"""
+		self.api.fyg_click(ClickType.ReWish)
