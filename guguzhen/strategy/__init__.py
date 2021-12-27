@@ -1,5 +1,10 @@
+import sys
+
+from .beach import *
 from .character import *
 from .gift import *
+from .pk import *
+from .wish import *
 
 
 class CheckVersion:

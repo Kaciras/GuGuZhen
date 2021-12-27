@@ -2,6 +2,7 @@ import random
 import time
 
 from .base import FYGClient
+from .beach import *
 from .character import *
 from .gift import *
 from .pk import *
@@ -26,7 +27,7 @@ class GuGuZhen(FYGClient):
 		return PKApi(self)
 
 	@property
-	def wish(self):
+	def wishing(self):
 		return WishApi(self)
 
 	@property
@@ -34,6 +35,9 @@ class GuGuZhen(FYGClient):
 		return GiftApi(self)
 
 	@property
+	def beach(self):
+		return BeachApi(self)
+
+	@property
 	def character(self):
 		return CharacterApi(self)
-

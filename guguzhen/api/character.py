@@ -1,6 +1,7 @@
 import re
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntEnum
+from typing import Dict, Optional
 
 from lxml import etree
 
@@ -11,6 +12,7 @@ _id_pkg = re.compile(r"(\d+)','Lv.(\d+) ([^']+)")
 _xp = re.compile(r"fyg_colpz0(\d)bg")
 
 _card_attrs_re = re.compile(r"(\d+) 最大等级<br/>(\d+) 技能位<br/>(\d+)% 品质")
+_fc_re = re.compile(r"获得(\d+)水果核")
 
 
 class Halo(Enum):
@@ -39,22 +41,55 @@ class Halo(Enum):
 	后发制人 = "406"
 
 
+class AmuletType(IntEnum):
+	apple: 1
+	grape: 2
+	cherry: 3
+
+
+@dataclass(eq=False, slots=True)
+class RandomCard:
+	pass
+
+
+@dataclass(frozen=True, slots=True)
+class EquipAttr:
+	type: str   # 属性名
+	ratio: int  # 倍率
+	value: int  # 属性值
+
+
+@dataclass(frozen=True, slots=True)
+class AmuletAttr:
+	type: str
+	value: int
+	is_percent: bool
+
+
+@dataclass(frozen=True, slots=True)
+class Amulet:
+	grade: int				  # 品质等级
+	type: AmuletType		  # 类型
+	attrs: tuple[AmuletAttr]  # 属性列表
+
+
+@dataclass(frozen=True, slots=True)
+class Item:
+	grade: int				 # 装备品质
+	level: int				 # 装备等级
+	name: str				 # 物品名
+	attrs: tuple[EquipAttr]  # 属性列表
+	mystery: Optional[str]   # 神秘属性文本
+
+
 @dataclass(eq=False, slots=True)
 class ItemsInfo:
-	size: int			# 背包格子数
-	backpacks: list		# 背包物品
-	repository: list	# 仓库物品
+	size: int					 # 背包格子数
+	backpacks: Dict[int, Item]	 # 背包物品
+	repository: Dict[int, Item]  # 仓库物品
 
 
-@dataclass(eq=False, slots=True)
-class Item:
-	id: int		 # 物品的 ID
-	grade: int	 # 装备品质
-	level: int	 # 装备等级
-	name: str	 # 物品名
-
-
-@dataclass(eq=False, slots=True)
+@dataclass(eq=False)
 class Equipment:
 	weapon: Item	 # 武器
 	bracelet: Item	 # 手部
@@ -62,7 +97,7 @@ class Equipment:
 	accessory: Item	 # 发饰
 
 
-@dataclass(eq=False, slots=True)
+@dataclass(frozen=True, slots=True)
 class Card:
 	id: int			# 卡片 ID
 	level: int		# 等级
@@ -74,23 +109,53 @@ class Card:
 
 def _parse_equipments_slots(buttons):
 	buttons = filter(lambda x: x.get("onclick"), buttons)
-	return list(map(_parse_item_button, buttons))
+	return dict(map(parse_item_button, buttons))
 
 
-def _parse_item_button(button):
+def parse_item_button(button):
 	click = button.get("onclick")
+	title = button.get("title")
+
+	# 随机卡片标题为空
+	if not title:
+		return _get_id(click), RandomCard()
+
 	match = _xp.search(button.get("class"))
 	grade = int(match.group(1))
+
+	attrs, mystery = _parse_popup(button.get("data-content"))
 
 	match = _id_pkg.search(click)
 	if match:
 		id_, level, name = match.groups()
-		return Item(int(id_), grade, int(level), name)
+		return int(id_), Item(grade, int(level), name)
 
-	id_ = int(click[5:-1])
-	match = _lvp.search(button.get("title"))
-	level, name = match.groups()
-	return Item(id_, grade, int(level), name)
+	id_ = _get_id(click)
+	level, name = _lvp.search(title).groups()
+
+	return id_, Item(grade, int(level), name)
+
+
+def _parse_popup(data_content):
+	rows = etree.HTML(data_content).xpath("/html/body/p")
+
+	return tuple(map(_parse_equip_attr, rows[:4])), \
+		   rows[4].text if len(rows) > 4 else None
+
+
+def _parse_equip_attr(paragraph: etree.ElementBase):
+	label, text = paragraph.iterchildren()
+
+	ratio = int(label.text[:-1])
+	type_, value = text.text.split(" ")
+
+	return EquipAttr(type_, ratio, int(value[:-1]), )
+
+
+# zbtip(id)、stpick(id) 或者 puto(id)
+def _get_id(onclick):
+	i = onclick.index("(") + 1
+	return int(onclick[i:-1])
 
 
 class CharacterApi:
@@ -103,7 +168,7 @@ class CharacterApi:
 		html = self.api.fyg_read(ReadType.Character)
 
 	def get_repository(self):
-		"""武器装备"""
+		"""获取所有的武器装备"""
 		html = self.api.fyg_read(ReadType.Repository)
 		html = etree.HTML(html)
 
@@ -116,6 +181,42 @@ class CharacterApi:
 
 		return ItemsInfo(size, backpacks, repository)
 
+	def move_to_backpack(self, rp_id):
+		"""将仓库中的物品放入背包"""
+		text = self.api.fyg_click(ClickType.PutOut, id=rp_id)
+		if text != "ok":
+			raise Exception("失败：" + text)
+
+	def move_to_repo(self, bp_id):
+		"""将背包中的物品放入仓库"""
+		text = self.api.fyg_click(ClickType.PutIn, id=bp_id)
+		if text != "ok":
+			raise Exception("失败：" + text)
+
+	def put_on(self, bp_id):
+		"""穿上装备"""
+		text = self.api.fyg_click(ClickType.PutOn, id=bp_id)
+		if text != "ok":
+			raise Exception("失败：" + text)
+
+	def destroy(self, bp_id):
+		"""
+		熔炼或销毁物品，如果物品是装备则熔炼为护身符；是护身符则销毁。
+
+		:param bp_id: 物品在背包中的 ID
+		:return:
+		"""
+		text = self.api.fyg_click(ClickType.Destroy, id=bp_id, yz="124")
+		try:
+			nid = int(text)
+			self.api.fyg_read(ReadType.ZbTip, id=nid)
+		# TODO
+		except ValueError:
+			match = _fc_re.search(text)
+			if match is None:
+				raise Exception("失败：" + text)
+			return int(match.group(1))
+
 	def switch_card(self, card):
 		if isinstance(card, Card):
 			card = card.id
@@ -127,7 +228,7 @@ class CharacterApi:
 		arr = ",".join(map(lambda x: x.value, values))
 		text = self.api.fyg_click(ClickType.SetHalo, arr=arr)
 		if text != "ok":
-			raise Exception("换卡失败：" + text)
+			raise Exception("失败：" + text)
 
 	def get_cards(self):
 		"""角色卡片列表"""
@@ -145,7 +246,8 @@ class CharacterApi:
 			lv_max = int(match.group(1))
 			skills = int(match.group(2))
 			quality = int(match.group(3))
+			in_use = attrs.find("当前使用中") > 0
 
-			cards.append(Card(id_, level, role, lv_max, skills, quality))
+			cards.append(Card(id_, level, role, lv_max, skills, quality, in_use))
 
 		return cards
