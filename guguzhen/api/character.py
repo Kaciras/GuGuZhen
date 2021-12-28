@@ -8,14 +8,20 @@ from lxml import etree
 from .base import ReadType, FYGClient, Role, ClickType
 
 _lvp = re.compile(r">(\d+)</span> (.+)")
-_id_pkg = re.compile(r"(\d+)','Lv.(\d+) ([^']+)")
-_xp = re.compile(r"fyg_colpz0(\d)bg")
+_id_with_label = re.compile(r"(\d+)','Lv.\d+ ([^']+)")
+_color_class = re.compile(r"fyg_colpz0(\d)bg")
+_amulet_content = re.compile(r"\+(\d+) ([点%])")
 
 _card_attrs_re = re.compile(r"(\d+) 最大等级<br/>(\d+) 技能位<br/>(\d+)% 品质")
 _fc_re = re.compile(r"获得(\d+)水果核")
 
 
 class Halo(Enum):
+	"""
+	所有的光环天赋，值是对应的 ID，名字懒得翻译成英文了。
+	虽然值可以解析为整数，但对其做运算无意义，所以用 str 而不是 int。
+	"""
+
 	启程之誓 = "101"
 	启程之心 = "102"
 	启程之风 = "103"
@@ -41,48 +47,61 @@ class Halo(Enum):
 	后发制人 = "406"
 
 
-class AmuletType(IntEnum):
-	apple: 1
-	grape: 2
-	cherry: 3
+# 随机卡片没属性，直接用个对象来标识
+RandomCard = object()
 
 
-@dataclass(eq=False, slots=True)
-class RandomCard:
-	pass
+class Grade(IntEnum):
+	"""物品的品质（背景颜色）"""
+
+	black = 1
+	cyan = 2
+	green = 3
+	orange = 4
+	red = 5
 
 
 @dataclass(frozen=True, slots=True)
 class EquipAttr:
-	type: str   # 属性名
-	ratio: int  # 倍率
-	value: int  # 属性值
+	type: str   	# 属性名
+	ratio: int  	# 倍率
+	value: int  	# 属性值
+
+	def __str__(self):
+		return f"[{self.ratio}%] {self.type} {self.value}"
 
 
 @dataclass(frozen=True, slots=True)
 class AmuletAttr:
-	type: str
-	value: int
-	is_percent: bool
+	type: str		# 增加的属性
+	value: int		# 增加量
+	unit: str		# 单位，点或%
+
+	def __str__(self):
+		return f"[{self.type} +{self.value}{self.unit}]"
 
 
 @dataclass(frozen=True, slots=True)
 class Amulet:
-	grade: int				  # 品质等级
-	type: AmuletType		  # 类型
+	grade: Grade			  # 品质
+	name: str		 		  # 名字
+	enhancement: int		  # 强化次数
 	attrs: tuple[AmuletAttr]  # 属性列表
 
 
 @dataclass(frozen=True, slots=True)
-class Item:
-	grade: int				 # 装备品质
-	level: int				 # 装备等级
+class Equipment:
+	grade: Grade			 # 装备品质
 	name: str				 # 物品名
+	level: int				 # 装备等级
 	attrs: tuple[EquipAttr]  # 属性列表
 	mystery: Optional[str]   # 神秘属性文本
 
 
-@dataclass(eq=False, slots=True)
+Item = Amulet | Equipment
+
+
+@dataclass(eq=False)
 class ItemsInfo:
 	size: int					 # 背包格子数
 	backpacks: Dict[int, Item]	 # 背包物品
@@ -90,7 +109,7 @@ class ItemsInfo:
 
 
 @dataclass(eq=False)
-class Equipment:
+class EquipConfig:
 	weapon: Item	 # 武器
 	bracelet: Item	 # 手部
 	armor: Item		 # 衣服
@@ -105,6 +124,7 @@ class Card:
 	lv_max: int		# 最大等级
 	skills: int		# 技能位
 	quality: int    # 品质
+	in_use: bool    # 使用中？
 
 
 def _parse_equipments_slots(buttons):
@@ -113,34 +133,39 @@ def _parse_equipments_slots(buttons):
 
 
 def parse_item_button(button):
-	click = button.get("onclick")
-	title = button.get("title")
+	onclick, title = button.get("onclick"), button.get("title")
 
 	# 随机卡片标题为空
 	if not title:
-		return _get_id(click), RandomCard()
+		return _get_id(onclick), RandomCard
 
-	match = _xp.search(button.get("class"))
-	grade = int(match.group(1))
+	match = _color_class.search(button.get("class"))
+	grade = Grade(int(match.group(1)))
+	entries = etree.HTML(button.get("data-content")).xpath("/html/body/p")
 
-	attrs, mystery = _parse_popup(button.get("data-content"))
-
-	match = _id_pkg.search(click)
+	# 护身符的 onclick 是两个参数。
+	match = _id_with_label.search(onclick)
 	if match:
-		id_, level, name = match.groups()
-		return int(id_), Item(grade, int(level), name)
+		enhance = int(button.getchildren()[0].tail)
+		attrs = tuple(map(_parse_amulet_attr, entries))
+		id_, name = match.groups()
 
-	id_ = _get_id(click)
+		return int(id_), Amulet(grade, name, enhance, attrs)
+
+	# 剩下的情况就是装备。
+	attrs = tuple(map(_parse_equip_attr, entries[:4]))
+	mystery = entries[4].text if len(entries) > 4 else None
+
+	id_ = _get_id(onclick)
 	level, name = _lvp.search(title).groups()
 
-	return id_, Item(grade, int(level), name)
+	return id_, Equipment(grade, name, int(level), attrs, mystery)
 
 
-def _parse_popup(data_content):
-	rows = etree.HTML(data_content).xpath("/html/body/p")
-
-	return tuple(map(_parse_equip_attr, rows[:4])), \
-		   rows[4].text if len(rows) > 4 else None
+def _parse_amulet_attr(paragraph: etree.ElementBase):
+	span = paragraph.getchildren()[0]
+	v, u = _amulet_content.match(span.text).groups()
+	return AmuletAttr(paragraph.text, int(v), u)
 
 
 def _parse_equip_attr(paragraph: etree.ElementBase):
