@@ -40,7 +40,7 @@ class GiftApi:
 			"光环": float(match.group(5))
 		}
 
-	def get_cards(self):
+	def get_gifts(self):
 		html = self.api.fyg_read(ReadType.Gifts)
 		cards, index = {}, 0
 

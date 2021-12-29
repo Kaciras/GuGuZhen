@@ -6,7 +6,7 @@ from guguzhen.api import ReadType
 from .base import FYGClient, ClickType
 
 # 懒得翻译成英文了
-_Buffers = namedtuple("WishValues", [
+_Buffers = namedtuple("WishBuffers", [
 	"强化背包", "每日海滩出产装备",
 	"对玩家战斗进度保护", "对野怪战斗进度保护",
 	"强化搜刮奖励经验", "强化搜刮奖励贝壳",

@@ -63,6 +63,7 @@ class PKApi:
 		self.api = api
 
 	def get_info(self):
+		"""获取段位、体力等基本信息"""
 		html = self.api.fyg_read(ReadType.PK)
 		html = etree.HTML(html)
 		spans = html.xpath("//span")
@@ -80,6 +81,7 @@ class PKApi:
 
 
 	def pillage(self):
+		"""搜刮资源"""
 		html = self.api.fyg_click(ClickType.Pillage)
 		match1 = _exp.search(html)
 
@@ -95,3 +97,9 @@ class PKApi:
 			int(match2.group(1)),
 			(float(min_), float(max_)),
 		)
+
+	def rejuvenate(self):
+		"""恢复体力到 100，固定消耗 20 星沙"""
+		text = self.api.fyg_click(ClickType.Rejuvenate)
+		if text != "体力已刷新。":
+			raise Exception("星沙不够")

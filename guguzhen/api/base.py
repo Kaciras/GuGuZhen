@@ -42,6 +42,7 @@ class ReadType(Enum):
 	Statistics = 13  # 统计信息
 	CardDetail = 18  # 卡片详情
 	Wish = 19		 # 许愿池
+	ZbTip = 20		 # 查询装备信息
 
 
 class VS(Enum):
@@ -51,13 +52,21 @@ class VS(Enum):
 
 class ClickType(Enum):
 	PickUp = 1			# 获取沙滩上的装备
+	PutOn = 3  			# 穿上装备
 	SetHalo = 4			# 保存光环天赋
 	SwitchCard = 5		# 装备卡片
 	Throw = 7			# 丢弃到沙滩
 	OpenGift = 8	 	# 点好运奖励的卡片
+	Destroy = 9	 		# 销毁护身符
+	DeleteCard = 11	 	# 销毁护身符
 	RefreshBeach = 12   # 强制刷新海滩，每次 5 星沙
+	Rejuvenate = 13		# 恢复体力到 100
 	Pillage = 16	 	# 搜刮资源
+	Wish = 18	 		# 许愿
+	ReWish = 19	 		# 重随许愿点
 	ClearBeach = 20	 	# 批量清理沙滩
+	PutIn = 21  		# 将物品移入仓库
+	PutOut = 22  		# 将物品移入背包
 
 # @formatter:on
 

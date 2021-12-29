@@ -4,7 +4,7 @@ from urllib.parse import parse_qsl
 from pytest import fixture
 from pytest_httpx import HTTPXMock
 
-from guguzhen.api import GuGuZhen, PKRank
+from guguzhen.api import GuGuZhen, PKRank, Card, Talent
 
 _safe_id = "abc123"
 
@@ -78,6 +78,18 @@ def test_get_beach(fyg_server):
 	assert len(items) == 11
 
 
+def test_get_talent(fyg_server):
+	fyg_server.mock_res("ReadTalent.html")
+
+	api = GuGuZhen({})
+	info = api.character.get_talent()
+
+	assert info.halo == 167.89
+	assert info.talent == (Talent.启程之风, Talent.点到为止, Talent.飓风之力)
+
+	fyg_server.verify_read(f="5")
+
+
 def test_get_cards(fyg_server):
 	fyg_server.mock_res("ReadCards.html")
 
@@ -85,6 +97,7 @@ def test_get_cards(fyg_server):
 	cards = api.character.get_cards()
 
 	assert len(cards) == 5
+	assert cards[0] == Card(1262789, 0, "艾", 350, 3, 3, False)
 
 	fyg_server.verify_read(f="8")
 
