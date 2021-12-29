@@ -5,7 +5,7 @@ from enum import Enum
 from lxml import etree
 
 from .base import ReadType, FYGClient, Role, ClickType
-from .items import Equipment
+from .items import Equipment, parse_item_button
 
 _card_attrs_re = re.compile(r"(\d+) 最大等级<br/>(\d+) 技能位<br/>(\d+)% 品质")
 
@@ -74,6 +74,21 @@ class Card:
 		return " ".join(parts)
 
 
+def _parse_card(div: etree.ElementBase):
+	attrs = etree.tostring(div.xpath("div[2]")[0], encoding="unicode")
+	match = _card_attrs_re.search(attrs)
+
+	return Card(
+		int(div.get("onclick")[7:-1]),
+		int(div.xpath("div[1]/div[1]/span")[0].text),
+		div.xpath("div[1]/div[3]")[0].text.strip(),
+		int(match.group(1)),
+		int(match.group(2)),
+		int(match.group(3)),
+		attrs.find("当前使用中") > 0
+	)
+
+
 class CharacterApi:
 
 	def __init__(self, api: FYGClient):
@@ -82,6 +97,10 @@ class CharacterApi:
 	def get_info(self):
 		"""我的战斗信息"""
 		html = self.api.fyg_read(ReadType.Character)
+		html = etree.HTML(html)
+
+		buttons = html.xpath("//div[@class='fyg_tc']/button")
+		return EquipConfig(*map(parse_item_button, buttons))
 
 	def switch_card(self, card):
 		if isinstance(card, Card):
@@ -101,19 +120,4 @@ class CharacterApi:
 		html = self.api.fyg_read(ReadType.CardList)
 		html = etree.HTML(html)
 
-		cards = []
-		for div in html.xpath("/html/body/div"):
-			id_ = int(div.get("onclick")[7:-1])
-			level = int(div.xpath("div[1]/div[1]/span")[0].text)
-			role = div.xpath("div[1]/div[3]")[0].text.strip()
-
-			attrs = etree.tostring(div.xpath("div[2]")[0], encoding="unicode")
-			match = _card_attrs_re.search(attrs)
-			lv_max = int(match.group(1))
-			skills = int(match.group(2))
-			quality = int(match.group(3))
-			in_use = attrs.find("当前使用中") > 0
-
-			cards.append(Card(id_, level, role, lv_max, skills, quality, in_use))
-
-		return cards
+		return tuple(map(_parse_card, html.xpath("/html/body/div")))

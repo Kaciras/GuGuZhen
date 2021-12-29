@@ -4,12 +4,15 @@ from datetime import datetime, timedelta
 from lxml import etree
 
 from .base import FYGClient, ReadType, ClickType
-from .character import Item
+from .items import Item, parse_item_button
 
 _time_re = re.compile(r"还有 (\d+) 分钟")
 
 
 class BeachApi:
+	"""
+	注意：沙滩的物品虽然也是用的 character.Item 类，但与物品栏中的物品 id 不同。
+	"""
 
 	def __init__(self, api: FYGClient):
 		self.api = api
@@ -24,6 +27,9 @@ class BeachApi:
 		"""查看沙滩"""
 		html = self.api.fyg_read(ReadType.Beach)
 		html = etree.HTML(html)
+
+		buttons = html.xpath("//button")
+		return list(map(parse_item_button, buttons))
 
 	def clear(self):
 		"""批量清理沙滩（清除史诗以下装备）"""

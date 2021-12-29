@@ -13,6 +13,7 @@ _color_class = re.compile(r"fyg_colpz0(\d)bg")
 _amulet_content = re.compile(r"\+(\d+) ([点%])")
 _fc_re = re.compile(r"获得(\d+)水果核")
 
+_onclick_id = re.compile(r"\('?(\d+)'?[,)]")
 
 # 随机卡片没属性，直接用个对象来标识
 RandomCard = object()
@@ -65,6 +66,7 @@ class Equipment:
 	mystery: Optional[str]   # 神秘属性文本
 
 
+# 背包和仓库里的物品，可以是护身符或装备
 Item = Amulet | Equipment
 
 
@@ -76,38 +78,43 @@ class ItemsInfo:
 
 
 def _parse_item_list(buttons):
-	buttons = filter(lambda x: x.get("onclick"), buttons)
-	return dict(map(parse_item_button, buttons))
+	id_and_item = {}
+
+	for button in buttons:
+		if not button.get("onclick"):
+			continue
+		item = parse_item_button(button)
+		id_ = _get_id(button)
+		id_and_item[id_] = item
+
+	return id_and_item
 
 
 def parse_item_button(button):
-	onclick, title = button.get("onclick"), button.get("title")
+	title = button.get("title")
 
 	# 随机卡片标题为空
 	if not title:
-		return _get_id(onclick), RandomCard
+		return RandomCard
 
 	match = _color_class.search(button.get("class"))
 	grade = Grade(int(match.group(1)))
 	entries = etree.HTML(button.get("data-content")).xpath("/html/body/p")
 
 	# 护身符的 onclick 是两个参数。
-	match = _id_with_label.search(onclick)
-	if match:
+	match = _lvp.search(title)
+	if not match:
 		enhance = int(button.getchildren()[0].tail)
 		attrs = tuple(map(_parse_amulet_attr, entries))
-		id_, name = match.groups()
 
-		return int(id_), Amulet(grade, name, enhance, attrs)
+		return Amulet(grade, title, enhance, attrs)
 
 	# 剩下的情况就是装备。
 	attrs = tuple(map(_parse_equip_attr, entries[:4]))
 	mystery = entries[4].text if len(entries) > 4 else None
+	level, name = match.groups()
 
-	id_ = _get_id(onclick)
-	level, name = _lvp.search(title).groups()
-
-	return id_, Equipment(grade, name, int(level), attrs, mystery)
+	return Equipment(grade, name, int(level), attrs, mystery)
 
 
 def _parse_amulet_attr(paragraph: etree.ElementBase):
@@ -125,10 +132,9 @@ def _parse_equip_attr(paragraph: etree.ElementBase):
 	return EquipAttr(type_, ratio, int(value[:-1]), )
 
 
-# zbtip(id)、stpick(id) 或者 puto(id)
-def _get_id(onclick):
-	i = onclick.index("(") + 1
-	return int(onclick[i:-1])
+# xxx('<id>','Lv.1 稀有苹果护身符')、或者 xxx(<id>)
+def _get_id(button):
+	return int(_onclick_id.search(button.get("onclick")).group(1))
 
 
 class ItemApi:
