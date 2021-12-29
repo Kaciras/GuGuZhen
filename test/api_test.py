@@ -42,6 +42,17 @@ def fyg_server(httpx_mock):
 	return FYGServerMock(httpx_mock)
 
 
+def test_get_character_info(fyg_server):
+	fyg_server.mock_res("ReadCharacter.html")
+
+	api = GuGuZhen({})
+	info = api.character.get_info()
+
+	assert info.weapon.level == 157
+
+	fyg_server.verify_read(f="9")
+
+
 def test_pillage(fyg_server):
 	fyg_server.mock_res("ClickPillage.html")
 
@@ -96,7 +107,7 @@ def test_get_repository(fyg_server):
 	fyg_server.mock_res("ReadRepository.html")
 
 	api = GuGuZhen({})
-	repo = api.character.get_repository()
+	repo = api.items.get_repository()
 
 	assert repo.size == 11
 
@@ -129,7 +140,7 @@ def test_get_gift_pool(fyg_server):
 	fyg_server.verify("/fyg_gift.html")
 
 
-def test_get_gift_cards(fyg_server):
+def test_get_gifts(fyg_server):
 	fyg_server.mock_res("giftop.html")
 
 	api = GuGuZhen({})

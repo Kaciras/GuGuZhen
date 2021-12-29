@@ -5,6 +5,7 @@ from .base import FYGClient
 from .beach import *
 from .character import *
 from .gift import *
+from .items import *
 from .pk import *
 from .wish import *
 
@@ -37,6 +38,10 @@ class GuGuZhen(FYGClient):
 	@property
 	def beach(self):
 		return BeachApi(self)
+
+	@property
+	def items(self):
+		return ItemApi(self)
 
 	@property
 	def character(self):
