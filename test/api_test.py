@@ -1,56 +1,124 @@
+from pathlib import Path
+from urllib.parse import parse_qsl
+
+from pytest import fixture
+from pytest_httpx import HTTPXMock
+
 from guguzhen.api import GuGuZhen, PKRank
 
+_safe_id = "abc123"
 
-def test_pillage(httpx_mock):
-	with open("fixtures/ClickPillage.html", encoding="utf8") as fp:
-		httpx_mock.add_response(html=fp.read())
+
+class FYGServerMock:
+	"""
+	简单的 Mock 请求封装，让请求相关的准备和断言一行就能搞定。
+	"""
+
+	def __init__(self, httpx_mock: HTTPXMock):
+		self.httpx_mock = httpx_mock
+
+	def mock_res(self, res_file):
+		html = Path("fixtures", res_file).read_text("utf8")
+		self.httpx_mock.add_response(html=html)
+
+	def verify(self, path, method="GET", **kwargs):
+		request = self.httpx_mock.get_request()
+		form = request.content.decode()
+
+		assert request.method == method
+		assert request.url.path == path
+		assert parse_qsl(form) == list(kwargs.items())
+
+	def verify_read(self, **kwargs):
+		self.verify("/fyg_read.php", "POST", **kwargs)
+
+	def verify_click(self, **kwargs):
+		kwargs["safeid"] = _safe_id
+		self.verify("/fyg_click.php", "POST", **kwargs)
+
+
+@fixture
+def fyg_server(httpx_mock):
+	return FYGServerMock(httpx_mock)
+
+
+def test_pillage(fyg_server):
+	fyg_server.mock_res("ClickPillage.html")
 
 	api = GuGuZhen({})
-	api.safe_id = ""
+	api.safe_id = _safe_id
 	trophy = api.pk.pillage()
+
+	fyg_server.verify_click(c="16")
 
 	assert trophy.value == 23713
 	assert trophy.base == 18500
 	assert trophy.range == (0.8, 1.2)
 
 
-def test_get_pk_info(httpx_mock):
-	with open("fixtures/ReadPK.html", encoding="utf8") as fp:
-		httpx_mock.add_response(html=fp.read())
+def test_get_beach(fyg_server):
+	fyg_server.mock_res("ReadBeach.html")
+
+	api = GuGuZhen({})
+	items = api.beach.get_items()
+
+	fyg_server.verify_read(f="1")
+
+	assert len(items) == 11
+
+
+def test_get_cards(fyg_server):
+	fyg_server.mock_res("ReadCards.html")
+
+	api = GuGuZhen({})
+	cards = api.character.get_cards()
+
+	assert len(cards) == 5
+
+	fyg_server.verify_read(f="8")
+
+
+def test_get_pk_info(fyg_server):
+	fyg_server.mock_res("ReadPK.html")
 
 	api = GuGuZhen({})
 	info = api.pk.get_info()
 
+	fyg_server.verify_read(f="12")
+
 	assert info.rank == PKRank.AA
 	assert info.power == 100
 	assert info.progress == 98
-	assert info.creepsEnhance == 2
+	assert info.strengthen == 2
 
 
-def test_get_repository(httpx_mock):
-	with open("fixtures/repository.html", encoding="utf8") as fp:
-		httpx_mock.add_response(html=fp.read())
+def test_get_repository(fyg_server):
+	fyg_server.mock_res("ReadRepository.html")
 
 	api = GuGuZhen({})
-	get_equipments(api)
+	repo = api.character.get_repository()
+
+	assert repo.size == 11
+
+	fyg_server.verify_read(f="7")
 
 
-def test_get_safeid(httpx_mock):
-	with open("fixtures/index.html", encoding="utf8") as fp:
-		httpx_mock.add_response(html=fp.read())
+def test_get_safeid(fyg_server):
+	fyg_server.mock_res("index.html")
 
 	api = GuGuZhen({})
 	api.fetch_safeid()
 
 	assert api.safe_id == "aaaaaa"
 
+	fyg_server.verify("/fyg_index.php")
 
-def test_get_gift_pool(httpx_mock):
-	with open("fixtures/gift.html", encoding="utf8") as fp:
-		httpx_mock.add_response(html=fp.read())
+
+def test_get_gift_pool(fyg_server):
+	fyg_server.mock_res("fyg_gift.html")
 
 	api = GuGuZhen({})
-	pool = api.get_gift_pool()
+	pool = api.gift.get_pool()
 
 	assert pool.conch == 114514
 	assert pool.sand == 24
@@ -58,15 +126,18 @@ def test_get_gift_pool(httpx_mock):
 	assert pool.cards == 1
 	assert pool.halo == 5.28
 
+	fyg_server.verify("/fyg_gift.html")
 
-def test_get_gift_cards(httpx_mock):
-	with open("fixtures/giftop.html", encoding="utf8") as fp:
-		httpx_mock.add_response(html=fp.read())
+
+def test_get_gift_cards(fyg_server):
+	fyg_server.mock_res("giftop.html")
 
 	api = GuGuZhen({})
-	opened = api.get_gift_cards()
+	opened = api.gift.get_gifts()
 
 	assert len(opened) == 1
 	assert opened[0].type == "贝壳"
 	assert opened[0].base == 32600
 	assert opened[0].ratio == 250
+
+	fyg_server.verify_read(f="10")
