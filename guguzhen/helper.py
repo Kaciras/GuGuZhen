@@ -15,16 +15,29 @@ _color_map = (
 )
 
 
-def _do_print_item(item):
-	c = _color_map[item.grade]
-	h = item_hash(item)
-	e = " ".join(map(str, item.attrs))
+def _full_print(items):
+	for item in items:
+		c, h = _color_map[item.grade], item_hash(item)
+		e = " ".join(map(str, item.attrs))
 
-	if isinstance(item, Amulet):
-		print(f"{h} {c}+{item.enhancement} {item.name}{Fore.RESET} {e}")
-	else:
-		m = Fore.RED + " [+神秘属性]" + Fore.RESET if item.mystery else ""
-		print(f"{h} {c}Lv.{item.level} {item.name}{Fore.RESET} {e}{m}")
+		if isinstance(item, Amulet):
+			print(f"{h} {c}+{item.enhancement} {item.name}{Fore.RESET} {e}")
+		else:
+			m = Fore.RED + " [+神秘属性]" + Fore.RESET if item.mystery else ""
+			print(f"{h} {c}Lv.{item.level} {item.name}{Fore.RESET} {e}{m}")
+
+
+def _print_hash_list(items):
+	"""打印物品的 hash 值，10 个一行跟游戏一致"""
+	items = tuple(items)
+	for i in range(0, len(items), 10):
+		for e in items[i:i + 10]:
+			h = item_hash(e)
+			print(f"'{h}'", end="")
+
+			if e != items[-1]:
+				print(", ", end="")
+		print()
 
 
 def item_hash(item: Item):
@@ -60,26 +73,34 @@ def item_hash(item: Item):
 	return urlsafe_b64encode(digest).decode()
 
 
-def print_equipments(api: GuGuZhen):
+def print_items(api: GuGuZhen, short=True):
+	"""
+	在控制台中输出所有拥有的物品。
+
+	:param api: 不解释
+	:param short: 是否使用短格式（仅输出 hash）
+	"""
+	if short:
+		print_fn = _print_hash_list
+	else:
+		print_fn = _full_print
+
 	equip = api.character.get_info()
 	items = api.items.get_repository()
 
 	print(f"\n[正在使用的]")
-	_do_print_item(equip.weapon)
-	_do_print_item(equip.bracelet)
-	_do_print_item(equip.armor)
-	_do_print_item(equip.accessory)
+	print_fn([equip.weapon, equip.bracelet,
+			  equip.armor, equip.accessory])
 
 	print(f"\n[背包 (容量={items.size})]")
-	for item in items.backpacks.values():
-		_do_print_item(item)
+	print_fn(items.backpacks.values())
 
 	print("\n[仓库]")
-	for item in items.repository.values():
-		_do_print_item(item)
+	print_fn(items.repository.values())
 
 
 def print_cards(api: GuGuZhen):
+	"""在控制台中输出所有的卡片"""
 	print("\n[角色卡片]")
 
 	for card in api.character.get_cards():
