@@ -11,11 +11,11 @@ _fixtures = Path(__file__).parent.parent.joinpath("fixtures")
 _safe_id = "abc123"
 
 _api_instance = GuGuZhen({})
-_api_instance.safe_id = _safe_id
 
 
 @fixture
 def api():
+	_api_instance.safe_id = _safe_id
 	return _api_instance
 
 
@@ -42,7 +42,7 @@ class FYGServerMock:
 
 		assert request.method == method
 		assert request.url.path == path
-		assert parse_qsl(form) == list(kwargs.items())
+		assert dict(parse_qsl(form)) == kwargs
 
 	def verify_read(self, **kwargs):
 		self.verify("/fyg_read.php", "POST", **kwargs)

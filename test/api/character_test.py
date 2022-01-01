@@ -27,7 +27,7 @@ def test_get_cards(api, fyg_server):
 
 	cards = api.character.get_cards()
 
-	assert len(cards) == 5
-	assert cards[0] == Card(1262789, 0, "艾", 350, 3, 0.03, False)
+	assert len(cards) == 7
+	assert cards[3] == Card(1462388, 0, "艾", 351, 3, 0.03, False)
 
 	fyg_server.verify_read(f="8")

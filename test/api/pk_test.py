@@ -1,7 +1,7 @@
 from guguzhen.api import PKRank
 
 
-def test_get_pk_info(api, fyg_server):
+def test_get_info(api, fyg_server):
 	fyg_server.mock_res("ReadPK.html")
 
 	info = api.pk.get_info()
@@ -15,7 +15,7 @@ def test_get_pk_info(api, fyg_server):
 
 
 def test_vs_creep(api, fyg_server):
-	fyg_server.mock_res("VIntel.html")
+	fyg_server.mock_res("VIntel_0.html")
 
 	fighting = api.pk.fight_creep()
 
