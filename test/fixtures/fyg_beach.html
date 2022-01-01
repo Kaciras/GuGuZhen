@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>咕咕镇</title>
+<meta name="keywords" content="web小游戏,策略小游戏" />
+<meta name="description" content="一个打怪升级加点换装备的纯web小游戏。" />
+<link rel="stylesheet" type="text/css" href="ys/zui/css/zui.min.css" />
+<link rel="stylesheet" type="text/css" href="ys/style_fyg210226.css" />
+<style type="text/css">
+
+</style>
+<script type="text/javascript" src="ys/zui/lib/jquery/jquery.js"></script>
+<script type="text/javascript" src="ys/zui/js/zui.min.js"></script>
+
+
+</head>
+<body>
+<div style="width:1200px;margin: 0 auto;">
+
+<div class="row">
+	<nav class="navbar navbar-default" role="navigation">
+	<ul class="nav navbar-nav">
+    <li><a href="fyg_index.php" style="color:#FF3399;"><i class="icon icon-user"></i> redis</a></li>
+		<li><a href="fyg_pk.php"><i class="icon icon-flag"></i> 争夺战场</a></li>
+        <li><a href="fyg_equip.php"><i class="icon icon-credit"></i> 我的角色</a></li>
+        <li><a href="fyg_wish.php"><i class="icon icon-adjust"></i> 许愿池</a></li>
+        <li><a href="fyg_beach.php"><i class="icon icon-gift"></i> 海滩收获</a></li>
+        <li><a href="fyg_gift.php"><i class="icon icon-coffee"></i> 好运奖励</a></li>
+
+        <li><a href="fyg_shop.php"><i class="icon icon-diamond"></i> 道具商店</a></li>	</ul>
+	</nav>
+</div>
+
+<div class="row">
+
+<div class="row">
+<div class="col-md-3">
+	<div class="panel panel-primary">
+	<div class="panel-heading">
+	我的背包
+	</div>
+	<div id="backpacks" class="panel-body">
+
+		<div class="col-sm-6" style="padding-bottom:8px;"><button class="btn btn-block disabled" type="button">空位</button></div>
+	</div>
+	</div>
+</div>
+<div class="col-md-9">
+    <div class="panel panel-primary">
+	<div class="panel-heading">
+    批量操作菜单
+	</div>
+	<div class="panel-body">
+        <div class="btn-group">
+            <button class="btn btn-danger " type="button" onclick="sttz()">批量清理沙滩（清除史诗以下装备）</button>
+        </div>
+        <div class="btn-group pull-right">
+            <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown"><i class="icon icon-diamond"> 强制刷新，立即获得下一批随机装备</i></button>
+            <ul class="dropdown-menu" role="menu"><li><a href="###" style="color:#EA644A;" onclick="gx_sxst()">确认刷新沙滩时间（需消耗 5 星沙）</a></li></ul>
+        </div>
+	</div>
+	</div>
+	<div class="panel panel-primary">
+	<div class="panel-heading">
+    沙滩 （注意：下方沙滩上每个出现的物品都只会保留24小时。） <span class="pull-right">距离下次随机装备被冲上沙滩还有 1310 分钟</span>
+	</div>
+	<div id="beachall" class="panel-body load-indicator">
+
+读取中......
+	</div>
+	</div>
+</div>
+</div>
+
+
+<div class="row">
+<div class="panel panel-info">
+<div class="panel-heading">
+	说明
+</div>
+<div class="panel-body">
+	沙滩上的物品只会保留24小时，请在时限内拾取你需要的装备、贝壳、卡片等物品，避免丢失。<br>
+</div>
+</div>
+</div>
+
+
+
+<script language="JavaScript">
+$(function(){
+    stall();
+    stbp();
+})
+function stall(){
+	$.ajax({
+		type: "POST",
+		url: "fyg_read.php",
+		data: "f=1",
+		success: function(msg){
+			$("#beachall").html(msg);
+        $('[data-toggle="popover"]').popover();
+        }
+    });
+}
+function stbp(){
+	$.ajax({
+		type: "POST",
+		url: "fyg_read.php",
+		data: "f=2",
+		success: function(msg){
+			$("#backpacks").html(msg);
+        $('[data-toggle="popover"]').popover();
+        }
+    });
+}
+function stpick(id){
+    $("#beachall").toggleClass("loading");
+	$.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=1&id="+id+"&safeid=474dd9",
+		success: function(msg){
+        if(msg=="ok"){
+            stall();
+            stbp();
+        }else{
+            $("#mymessagehtml").html(msg);
+            $("#mymessage").modal('show', 'fit');
+            stall();
+        }
+        $("#beachall").toggleClass("loading");
+		}
+	});
+}
+
+function zbtip(id){
+    $.ajax({
+		type: "POST",
+		url: "fyg_read.php",
+		data: "f=20&id="+id,
+		success: function(msg){
+            $("#mymessagehtml").html(msg);
+            $("#mymessage").modal('show', 'fit');
+        }
+    });
+}
+function stdel(id){
+    $.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=7&id="+id+"&safeid=474dd9",
+		success: function(msg){
+        $("#mymessagehtml").html(msg);
+        $("#mymessage").modal('show', 'fit');
+        stall();
+        stbp();
+		}
+	});
+}
+function sttz(){
+    $.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=20&safeid=474dd9",
+		success: function(msg){
+            $("#mymessagehtml").html(msg);
+            $("#mymessage").modal('show', 'fit');
+            stall();
+		}
+	});
+}
+function puton(id){
+    $("#backpacks").toggleClass("loading");
+	$.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=3&id="+id+"&safeid=474dd9",
+		success: function(msg){
+            $("#mymessagehtml").html(msg);
+            $("#mymessage").modal('show', 'fit');
+            stbp();
+        $("#backpacks").toggleClass("loading");
+		}
+	});
+}
+function pirl(id){
+    var pirlyz=$("#pirlyz").val();
+    var zzs=/^[0-9]\d*$/;
+	$.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=9&id="+id+"&yz="+pirlyz+"&safeid=474dd9",
+		success: function(msg){
+        if(zzs.test(msg)){
+            zbtip(msg);
+            stbp();
+        }else{
+            $("#mymessagehtml").html(msg);
+            $("#mymessage").modal('show', 'fit');
+            stbp();
+        }
+		}
+	});
+}
+function puti(id){
+    $("#backpacks").toggleClass("loading");
+	$.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=21&id="+id+"&safeid=474dd9",
+		success: function(msg){
+        if(msg=="ok"){
+            $("#mymessage").modal('hide', 'fit');
+            stbp();
+        }else{
+            $("#mymessagehtml").html(msg);
+            $("#mymessage").modal('show', 'fit');
+        }
+        $("#backpacks").toggleClass("loading");
+		}
+	});
+}
+function gx_sxst(){
+	$.ajax({
+		type: "POST",
+		url: "fyg_click.php",
+		data: "c=12&safeid=474dd9",
+		success: function(msg){
+            $("#mymessagehtml").html(msg);
+            $("#mymessage").modal('show', 'fit');
+            window.location.reload();
+		}
+	});
+}
+</script>
+
+</div>
+
+<div class="modal fade load-indicator" id="mymessage">
+  <div class="modal-dialog" style="width:500px;">
+    <div class="modal-content">
+        <div class="modal-body fyg_f14" id="mymessagehtml">
+        test
+        </div>
+      <div class="modal-footer"><button type="button" class="btn btn-block" data-dismiss="modal">关闭</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="row fyg_lh60 fyg_tc">
+
+<a class="label label-primary label-outline" href="fyg_login.php?m=out">退出登录状态</a>
+<a class="label label-outline" href="fyg_ulog.php">更新日志</a>
+
+</div>
+
+
+
+
+</div>
+
+<script language="JavaScript">
+	$(function(){
+		$('[data-toggle="tooltip"]').tooltip();
+	});
+</script>
+</body></html>

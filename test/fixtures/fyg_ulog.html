@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>咕咕镇</title>
+<meta name="keywords" content="web小游戏,策略小游戏" />
+<meta name="description" content="一个打怪升级加点换装备的纯web小游戏。" />
+<link rel="stylesheet" type="text/css" href="ys/zui/css/zui.min.css" />
+<link rel="stylesheet" type="text/css" href="ys/style_fyg210226.css" />
+<style type="text/css">
+
+</style>
+<script type="text/javascript" src="ys/zui/lib/jquery/jquery.js"></script>
+<script type="text/javascript" src="ys/zui/js/zui.min.js"></script>
+
+
+</head>
+<body>
+<div style="width:1200px;margin: 0 auto;">
+
+<div class="row">
+	<nav class="navbar navbar-default" role="navigation">
+	<ul class="nav navbar-nav">
+    <li><a href="fyg_index.php" style="color:#FF3399;"><i class="icon icon-user"></i> redis</a></li>
+		<li><a href="fyg_pk.php"><i class="icon icon-flag"></i> 争夺战场</a></li>
+        <li><a href="fyg_equip.php"><i class="icon icon-credit"></i> 我的角色</a></li>
+        <li><a href="fyg_wish.php"><i class="icon icon-adjust"></i> 许愿池</a></li>
+        <li><a href="fyg_beach.php"><i class="icon icon-gift"></i> 海滩收获</a></li>
+        <li><a href="fyg_gift.php"><i class="icon icon-coffee"></i> 好运奖励</a></li>
+
+        <li><a href="fyg_shop.php"><i class="icon icon-diamond"></i> 道具商店</a></li>	</ul>
+	</nav>
+</div>
+
+<div class="row"><div class="row">
+<div class="panel panel-primary">
+<div class="panel-heading">
+更新日志
+</div>
+<div class="panel-body">
+
+	<div class="alert">
+    <h3>2021/10/28</h3>
+    更改了传递方式，泥水里送来的贝壳和星沙会随机分批自动添加。（本条更新说明可能随时删除，但功能不会。）<br>
+	同步取消之前因为不能传递而赠送的20%附加贝壳以及30%老家部分。
+    </div>
+
+	<div class="alert">
+    <h3>2021/12/24</h3>
+    新增角色卡片“命”。<br>
+    师傅是一位预言法师，但已经叛出。身为法师但没公开使用过魔法，从来都是近战刺杀。从不正面作战，偷袭刺杀，主动现身前没人可以找到她。<br>
+    [被动]先兆感知 - 预言能力，无法被先攻，在命第一次出手以前，她会闪避一切伤害(单局最多触发3次)。<br>
+    [被动]恩赐解脱 - 暴击时，计算暴击后伤害提升50%。<br>
+    [主动]幽梦棱镜 - 在免疫 物理伤害、魔法伤害、真实伤害 三种形态随机切换，技能释放前不免疫任何伤害。<br><br>
+    这段时间尝试重写了战斗方式和装备机制，接下来会陆续更新。之前向老家索取贝壳的设定被推翻，正在寻找更安全的方式。
+
+    </div>
+
+    <div class="alert">
+    <h3>2021/10/20</h3>
+    “冥”的技能“生命掠夺”，改为“造成100%(自身最大生命值-自身当前生命值)的魔法伤害”，原“造成50%(自身最大生命值-自身当前生命值)的绝对伤害”。<br>
+    “冥”的技能“闪亮登场”，改为“物理和魔法防御-70%”，原“物理和魔法防御-60%”。<br>
+	“艾”的技能“烈焰宝石”，改为“造成(星火层数*对方15%(当前生命值+当前护盾值))的绝对伤害”，原“造成(星火层数*对方45%(当前生命值+当前护盾值))的魔法伤害”。<br>
+    </div>
+
+	<div class="alert">
+    <h3>2021/10/13</h3>
+    “冥”的技能“生命掠夺”，改为“造成50%(自身最大生命值-自身当前生命值)的绝对伤害”，原“造成100%(自身最大生命值-自身当前生命值)的绝对伤害”。<br>
+    “冥”的技能“闪亮登场”，改为“生命值+90%，物理和魔法防御-60%”，原“生命值+70%，物理和魔法防御-50%”。<br>
+    “冥”的技能“命运链接”，改为“冥受到(防御前物理和魔法)攻击时，对方受到40%该数值(防御前物理和魔法)攻击”，原“冥受到(物理和魔法)伤害时，对方受到同等(物理和魔法)伤害”。<br>
+    </div>
+
+    <div class="alert">
+    <h3>2021/10/12</h3>
+    新增角色卡片“冥”。<br>
+    几乎不死之身。对服装的要求是好看而非防护性，随便披一件单衣就能冲进敌阵。每当伊在城镇外发现梦的时候，她就会随后出现。<br>
+    [被动]闪亮登场 - 生命值+70%，物理和魔法防御-50%。<br>
+    [被动]命运链接 - 对方回复生命和护盾时，冥获得等值的回复效果。冥受到(物理和魔法)伤害时，对方受到同等(物理和魔法)伤害。<br>
+    [主动]生命掠夺 - 掠夺对方生命回复自身，恢复自身为满生命值状态，造成(自身最大生命值-自身当前生命值)的绝对伤害。<br><br>
+    接下来会更新从老家传递贝壳。需要提前说明一下，为了避免关联，今后从老家获得星沙和贝壳是固定的比例。<br>
+    比如你在咕咕镇点一次“呼叫老家支援”，老家（当前星沙和贝壳的10%）会送至咕咕镇，并且不是马上获取，而是在接下来1-2天内分批自动获得。<br>
+    这么做是为了让老家和咕咕镇的操作没有时间和数值可以关联对照，对此造成的不便利，请见谅。
+    </div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="modal fade load-indicator" id="mymessage">
+  <div class="modal-dialog" style="width:500px;">
+    <div class="modal-content">
+        <div class="modal-body fyg_f14" id="mymessagehtml">
+        test
+        </div>
+      <div class="modal-footer"><button type="button" class="btn btn-block" data-dismiss="modal">关闭</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="row fyg_lh60 fyg_tc">
+
+<a class="label label-primary label-outline" href="fyg_login.php?m=out">退出登录状态</a>
+<a class="label label-outline" href="fyg_ulog.php">更新日志</a>
+
+</div>
+
+
+
+
+</div>
+
+<script language="JavaScript">
+	$(function(){
+		$('[data-toggle="tooltip"]').tooltip();
+	});
+</script>
+</body></html>
