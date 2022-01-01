@@ -5,7 +5,7 @@ from datetime import datetime
 from .base import FYGClient, ReadType, ClickType, FygAPIError
 
 # 懒得翻译成英文了
-_Buffers = namedtuple("WishBuffers", [
+WishBuffers = namedtuple("WishBuffers", [
 	"强化背包", "每日海滩出产装备",
 	"对玩家战斗进度保护", "对野怪战斗进度保护",
 	"强化搜刮奖励经验", "强化搜刮奖励贝壳",
@@ -20,10 +20,10 @@ _Buffers = namedtuple("WishBuffers", [
 
 @dataclass(eq=False, slots=True)
 class WishInfo:
-	expiration: datetime  # 愿望有效期
-	cost: int			  # 下一次许愿需要的贝壳
-	point: int			  # 下一次的愿望的点数
-	buffers: _Buffers	  # 当前增益
+	expiration: datetime	# 愿望有效期
+	cost: int				# 下一次许愿需要的贝壳
+	point: int				# 下一次的愿望的点数
+	buffers: WishBuffers	# 当前增益
 
 
 class WishApi:
@@ -40,7 +40,7 @@ class WishApi:
 			datetime.strptime(xy_arr[2], "%Y/%m/%d %H:%M:%S"),
 			int(xy_arr[0]),
 			int(xy_arr[1]),
-			_Buffers(*map(int, xy_arr[3:]))
+			WishBuffers(*map(int, xy_arr[3:]))
 		)
 
 	def wish(self):
