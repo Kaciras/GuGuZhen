@@ -2,8 +2,7 @@ from collections import namedtuple
 from dataclasses import dataclass
 from datetime import datetime
 
-from guguzhen.api import ReadType
-from .base import FYGClient, ClickType
+from .base import FYGClient, ReadType, ClickType, FygAPIError
 
 # 懒得翻译成英文了
 _Buffers = namedtuple("WishBuffers", [
@@ -50,4 +49,6 @@ class WishApi:
 
 	def shuffle(self):
 		"""重随许愿点"""
-		self.api.fyg_click(ClickType.ReWish)
+		text = self.api.fyg_click(ClickType.ReWish)
+		if text != "许愿池已经重置排列。":
+			raise FygAPIError(text)

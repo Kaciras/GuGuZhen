@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from lxml import etree
 
-from .base import FYGClient, ReadType, ClickType
+from .base import FYGClient, ReadType, ClickType, LimitReachedError, FygAPIError
 from .items import Item, parse_item_button
 
 _time_re = re.compile(r"还有 (\d+) 分钟")
@@ -43,10 +43,18 @@ class BeachApi:
 		"""捡起装备"""
 		if isinstance(item, Item):
 			item = item.id
-		self.api.fyg_click(ClickType.PickUp, id=item)
+		text = self.api.fyg_click(ClickType.PickUp, id=item)
+
+		if text.startswith("背包已满"):
+			raise LimitReachedError("背包已满")
+		if text != "ok":
+			raise FygAPIError("拾取装备失败：" + text)
 
 	def throw(self, item):
 		"""丢弃到沙滩"""
 		if isinstance(item, Item):
 			item = item.id
-		self.api.fyg_click(ClickType.Throw, id=item)
+		text = self.api.fyg_click(ClickType.Throw, id=item)
+
+		if not text.startswith("已将装备丢弃到沙滩"):
+			raise FygAPIError("丢弃失败：" + text)

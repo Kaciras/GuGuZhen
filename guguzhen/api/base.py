@@ -21,39 +21,45 @@ _HEADERS = {
 Role = Literal["梦", "默", "薇", "艾", "冥", "琳", "伊", "命", "野怪"]
 
 
-class LimitReachedError(Exception):
+class ClientVersionError(Exception):
+	"""与服务端版本不匹配"""
 
-	def __init__(self):
-		super().__init__("次数已达上限")
+
+class FygAPIError(Exception):
+	"""调用 API 时的参数无效"""
+
+
+class LimitReachedError(Exception):
+	"""达到了体力、星沙、格子不够等限制"""
 
 
 # @formatter:off
 
 class ReadType(Enum):
-	Beach = 1		 # 海滩装备
-	Bag = 2			 # 海滩背包
-	Talent = 5		 # 光环天赋
-	Repository = 7   # 武器装备
-	CardList = 8     # 角色卡片列表
-	Character = 9    # 我的战斗信息
-	Gifts = 10       # 抽奖
-	Chips = 11		 # 筹码（不知道啥用）
-	PK = 12			 # 争夺战场
-	Statistics = 13  # 统计信息
-	CardDetail = 18  # 卡片详情
-	Wish = 19		 # 许愿池
-	ZbTip = 20		 # 查询装备信息
+	Beach = 1			# 海滩装备
+	Bag = 2				# 海滩背包
+	Talent = 5			# 光环天赋
+	Repository = 7 		# 武器装备
+	CardList = 8   		# 角色卡片列表
+	Character = 9  		# 我的战斗信息
+	Gifts = 10     		# 抽奖
+	Chips = 11			# 筹码（不知道啥用）
+	PK = 12				# 争夺战场
+	User = 13			# 统计信息
+	CardDetail = 18		# 卡片详情
+	Wish = 19			# 许愿池
+	ZbTip = 20			# 查询装备信息
 
 
 class VS(Enum):
-	Creeps = 1		 # 打野
-	Player = 2		 # 打人
+	Creeps = 1		# 打野
+	Player = 2		# 打人
 
 
 class ClickType(Enum):
 	PickUp = 1			# 获取沙滩上的装备
 	PutOn = 3  			# 穿上装备
-	SetHalo = 4			# 保存光环天赋
+	SetTalent = 4		# 保存光环天赋
 	SwitchCard = 5		# 装备卡片
 	Throw = 7			# 丢弃到沙滩
 	OpenGift = 8	 	# 点好运奖励的卡片

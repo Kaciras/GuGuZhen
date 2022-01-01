@@ -86,7 +86,7 @@ class PKApi:
 		match1 = _exp.search(html)
 
 		if match1 is None:
-			raise LimitReachedError()
+			raise LimitReachedError("没有体力了")
 
 		match2 = _base.search(html)
 		min_, max_ = match2.groups()[1:]
@@ -102,4 +102,4 @@ class PKApi:
 		"""恢复体力到 100，固定消耗 20 星沙"""
 		text = self.api.fyg_click(ClickType.Rejuvenate)
 		if text != "体力已刷新。":
-			raise Exception("星沙不够")
+			raise LimitReachedError("星沙不够")

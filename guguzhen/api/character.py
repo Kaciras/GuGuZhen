@@ -1,10 +1,11 @@
 import re
 from dataclasses import dataclass
 from enum import Enum
+from typing import Iterable
 
 from lxml import etree
 
-from .base import ReadType, FYGClient, Role, ClickType
+from .base import ReadType, FYGClient, Role, ClickType, FygAPIError
 from .items import Equipment, parse_item_button
 
 _card_attrs_re = re.compile(r"(\d+) 最大等级<br/>(\d+) 技能位<br/>(\d+)% 品质")
@@ -61,8 +62,10 @@ class TalentPanel:
 	talent: tuple[Talent]
 
 
-@dataclass(eq=False)
+@dataclass
 class EquipConfig:
+	"""当前身上穿的 4 个装备"""
+
 	weapon: Equipment	 	 # 武器
 	bracelet: Equipment	 	 # 手部
 	armor: Equipment		 # 衣服
@@ -107,7 +110,7 @@ def _parse_card(div: etree.ElementBase):
 		name.text.strip(),
 		int(match.group(1)),
 		int(match.group(2)),
-		int(match.group(3)),
+		float(match.group(3)) / 100,
 		attrs.find("当前使用中") > 0
 	)
 
@@ -138,11 +141,13 @@ class CharacterApi:
 
 		return TalentPanel(halo, tuple(talent))
 
-	def set_talent(self, values):
+	def set_talent(self, values: Iterable[Talent]):
 		arr = ",".join(map(lambda x: x.value, values))
-		text = self.api.fyg_click(ClickType.SetHalo, arr=arr)
+		text = self.api.fyg_click(ClickType.SetTalent, arr=arr)
+		# 点数不足：start_with 你当前装备的卡片
+		# 错误的天赋 ID 也返回 ok……
 		if text != "ok":
-			raise Exception("失败：" + text)
+			raise FygAPIError("光环天赋保存失败：" + text)
 
 	def get_cards(self):
 		"""角色卡片列表"""
@@ -156,12 +161,18 @@ class CharacterApi:
 			card = card.id
 		text = self.api.fyg_click(ClickType.SwitchCard, id=card)
 		if text != "ok":
-			raise Exception("换卡失败：" + text)
+			raise FygAPIError("换卡失败：" + text)
+
+	def rebuild(self, card):
+		"""重置卡片的加点"""
+		if isinstance(card, Card):
+			card = card.id
+		text = self.api.fyg_click(ClickType.Rebuild, id=card)
 
 	def delete_card(self, card):
 		if isinstance(card, Card):
 			card = card.id
 		text = self.api.fyg_click(ClickType.SwitchCard, id=card)
 		if text.startswith("你没有"):
-			raise Exception("你没有这张卡片或已经装备中")
+			raise FygAPIError("你没有这张卡片或已经装备中")
 

@@ -5,7 +5,7 @@ from typing import Dict, Optional
 
 from lxml import etree
 
-from .base import ReadType, FYGClient, ClickType
+from .base import ReadType, FYGClient, ClickType, LimitReachedError, FygAPIError
 
 _lvp = re.compile(r">(\d+)</span> (.+)")
 _id_with_label = re.compile(r"(\d+)','Lv.\d+ ([^']+)")
@@ -163,8 +163,10 @@ class ItemApi:
 		:param rp_id 物品在仓库中的 ID
 		"""
 		text = self.api.fyg_click(ClickType.PutOut, id=rp_id)
+		if text == "背包已满。":
+			raise LimitReachedError(text)
 		if text != "ok":
-			raise Exception("失败：" + text)
+			raise FygAPIError(f"{text}({rp_id=})")
 
 	def put_in(self, bp_id):
 		"""
@@ -174,17 +176,22 @@ class ItemApi:
 		"""
 		text = self.api.fyg_click(ClickType.PutIn, id=bp_id)
 		if text != "ok":
-			raise Exception("失败：" + text)
+			raise FygAPIError(f"{text}({bp_id=})")
 
 	def put_on(self, bp_id):
-		"""穿上装备"""
+		"""
+		穿上装备，该装备必须在背包中。
+
+		:param bp_id 物品在背包中的 ID
+		"""
 		text = self.api.fyg_click(ClickType.PutOn, id=bp_id)
 		if text != "ok":
-			raise Exception("失败：" + text)
+			raise FygAPIError(f"{text}({bp_id=})")
 
 	def destroy(self, bp_id):
 		"""
-		熔炼或销毁物品，如果物品是装备则熔炼为护身符；是护身符则销毁。
+		熔炼或销毁物品，该物品必须在背包中。
+		如果物品是装备则熔炼为护身符；是护身符则销毁。
 
 		:param bp_id: 物品在背包中的 ID
 		:return:
