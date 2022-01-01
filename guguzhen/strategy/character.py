@@ -1,3 +1,6 @@
+from collections import defaultdict
+from itertools import chain
+
 from guguzhen.api import GuGuZhen, Talent
 from guguzhen.helper import item_hash
 
@@ -32,21 +35,23 @@ class CharacterPreset:
 			if item_hash(s[i]) != e:
 				ctx.put_on(e)
 
-		out_list, in_list = [], []
-		for h in ctx.h_map:
-			area, id_ = ctx.h_map[h]
-			if h in self.backpack and area == ctx.items.repository:
-				out_list.append(id_)
-				self.backpack.remove(h)
-			if h not in self.backpack and area == ctx.items.backpack:
-				in_list.append(id_)
+		out_list, reaming = [], 0
+		ctx.refresh()
 
-		for id_ in in_list:
-			api.items.move_to_repo(id_)
+		for h in self.backpack:
+			ids = ctx.bp_map[h]
+			if ids:
+				reaming += 1
+				ids.pop()
+			else:
+				out_list.append(h)
 
-		count = min(ctx.items.size, len(out_list))
-		for i in range(0, count):
-			api.items.move_to_backpack(out_list[i])
+		for id_ in chain.from_iterable(ctx.bp_map.values()):
+			api.items.put_in(id_)
+
+		free = ctx.items.size - reaming
+		for h in out_list[:free]:
+			api.items.put_out(ctx.rp_map[h].pop())
 
 
 class ItemSwitchContext:
@@ -56,35 +61,42 @@ class ItemSwitchContext:
 
 	def __init__(self, api: GuGuZhen):
 		self.api = api
-		self.h_map = {}
+		self.bp_map = defaultdict(list)
+		self.rp_map = defaultdict(list)
 		self.items = None
 
 		self.config = api.character.get_info()
-		self._refresh()
+		self.refresh()
 
-	def _refresh(self):
-		items = self.items = self.api.items.get_repository()
-		h_map = self.h_map = {}
+	def refresh(self):
+		items = self.items = self.api.items.get_info()
+		self.bp_map.clear()
+		self.rp_map.clear()
 
 		for id_, e in items.backpacks.items():
-			h_map[item_hash(e)] = (items.backpacks, id_)
+			self.bp_map[item_hash(e)].append(id_)
 		for id_, e in items.repository.items():
-			h_map[item_hash(e)] = (items.repository, id_)
+			self.rp_map[item_hash(e)].append(id_)
 
-	def put_on(self, hash_: str):
-		area, id_ = self.h_map[hash_]
+	def r2b(self, hash_):
+		# 如果背包满了就随便移出去一个
 		bp = self.items.backpacks
-
-		# 如果在背包则直接换上即可
-		if area == bp:
-			self.api.items.put_on(id_)
-			return
-
-		# 如果背包满了就随便交换一个
 		if len(bp) >= self.items.size:
-			self.api.items.move_to_repo(bp[0])
-			self.api.items.move_to_backpack(id_)
-			self._refresh()
+			v = bp.popitem()[0]
+			self.api.items.put_in(v)
 
-		id_ = self.h_map[hash_][1]
+		# 将物品从仓库移到背包
+		id_ = self.rp_map[hash_][0]
+		self.api.items.put_out(id_)
+		self.refresh()
+
+		# 这回肯定在背包里了
+		return self.bp_map[hash_][0]
+
+	def put_on(self, hash_):
+		try:
+			id_ = self.bp_map[hash_][0]
+		except IndexError:
+			id_ = self.r2b(hash_)
+
 		self.api.items.put_on(id_)

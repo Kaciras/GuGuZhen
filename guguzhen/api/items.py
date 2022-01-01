@@ -142,8 +142,8 @@ class ItemApi:
 	def __init__(self, api: FYGClient):
 		self.api = api
 
-	def get_repository(self):
-		"""获取所有的武器装备"""
+	def get_info(self):
+		"""获取 我的角色/武器装备 页面的信息"""
 		html = self.api.fyg_read(ReadType.Repository)
 		html = etree.HTML(html)
 
@@ -156,14 +156,22 @@ class ItemApi:
 
 		return ItemsInfo(size, backpacks, repository)
 
-	def move_to_backpack(self, rp_id):
-		"""将仓库中的物品放入背包"""
+	def put_out(self, rp_id):
+		"""
+		将物品放入背包，该物品必须在仓库中。
+
+		:param rp_id 物品在仓库中的 ID
+		"""
 		text = self.api.fyg_click(ClickType.PutOut, id=rp_id)
 		if text != "ok":
 			raise Exception("失败：" + text)
 
-	def move_to_repo(self, bp_id):
-		"""将背包中的物品放入仓库"""
+	def put_in(self, bp_id):
+		"""
+		将物品放入仓库，该装备必须在背包中。
+
+		:param bp_id 物品在背包中的 ID
+		"""
 		text = self.api.fyg_click(ClickType.PutIn, id=bp_id)
 		if text != "ok":
 			raise Exception("失败：" + text)
