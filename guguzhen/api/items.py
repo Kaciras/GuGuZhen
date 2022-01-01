@@ -8,12 +8,17 @@ from lxml import etree
 from .base import ReadType, FYGClient, ClickType, LimitReachedError, FygAPIError
 
 _lvp = re.compile(r">(\d+)</span> (.+)")
+
 _id_with_label = re.compile(r"(\d+)','Lv.\d+ ([^']+)")
+
 _color_class = re.compile(r"fyg_colpz0(\d)bg")
+
 _amulet_content = re.compile(r"\+(\d+) ([点%])")
+
 _fc_re = re.compile(r"获得(\d+)水果核")
 
 _onclick_id = re.compile(r"\('?(\d+)'?[,)]")
+
 
 # 随机卡片没属性，直接用个对象来标识
 RandomCard = object()
@@ -194,15 +199,13 @@ class ItemApi:
 		如果物品是装备则熔炼为护身符；是护身符则销毁。
 
 		:param bp_id: 物品在背包中的 ID
-		:return:
+		:return: 如果是熔炼则返回护身符 ID，否则 None
 		"""
 		text = self.api.fyg_click(ClickType.Destroy, id=bp_id, yz="124")
 		try:
-			nid = int(text)
-			self.api.fyg_read(ReadType.ZbTip, id=nid)
-		# TODO
+			return int(text)
 		except ValueError:
 			match = _fc_re.search(text)
 			if match is None:
-				raise Exception("失败：" + text)
+				raise FygAPIError("销毁失败：" + text)
 			return int(match.group(1))

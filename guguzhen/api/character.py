@@ -79,8 +79,8 @@ class Card:
 	role: Role		# 类型
 	lv_max: int		# 最大等级
 	skills: int		# 技能位
-	quality: int    # 品质
-	in_use: bool    # 使用中？
+	quality: float	# 品质
+	in_use: bool 	# 使用中？
 
 	def __str__(self):
 		parts = [

@@ -47,8 +47,8 @@ class BeachApi:
 
 		if text.startswith("背包已满"):
 			raise LimitReachedError("背包已满")
-		if text != "ok":
-			raise FygAPIError("拾取装备失败：" + text)
+		if not text.endswith("ok"):
+			raise FygAPIError("拾取失败：" + text)
 
 	def throw(self, item):
 		"""丢弃到沙滩"""

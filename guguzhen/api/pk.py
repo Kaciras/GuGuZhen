@@ -1,10 +1,11 @@
 import re
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Tuple
+from typing import Tuple, Sequence
 
 from lxml import etree
 
+from . import parse_item_button
 from .base import FYGClient, ReadType, VS, ClickType, LimitReachedError, Role
 
 _exp = re.compile(r"获得了 (\d+) ([^<]+)")
@@ -28,10 +29,10 @@ class PKRank(IntEnum):
 
 @dataclass(eq=False, slots=True)
 class PKInfo:
-	rank: PKRank	 	# 当前所在段位
-	progress: int	 	# 段位进度
-	power: int		 	# 今日体力
-	strengthen: int		# 野怪附加强度
+	rank: PKRank	 		# 当前所在段位
+	progress: int	 		# 段位进度
+	power: int		 		# 今日体力
+	strengthen: int			# 野怪附加强度
 
 
 @dataclass(eq=False, slots=True)
@@ -44,17 +45,42 @@ class Trophy:
 
 @dataclass(eq=False, slots=True)
 class Fighter:
-	name: str		 # 名字
-	role: Role		 # 职业（卡片）
-	leval: int		 # 等级
-	strengthen: int  # 强度（仅野怪）
+	name: str				# 名字
+	role: Role				# 职业（卡片）
+	leval: int				# 等级
+	strengthen: int			# 强度（仅野怪）
+
+
+States = tuple[str, int]
+
+
+@dataclass(eq=False, slots=True)
+class Action:
+	is_attack: bool				# 是攻击方？
+	state: Sequence[States]		# 技能和状态
+
+	HP: int						# 血量
+	ES: int						# 护盾
+
+	AD: int						# 物伤
+	AP: int						# 法伤
+	TD: int						# 真伤
+
+	HP_lose: int				# 掉血
+	ES_lose: int				# 掉盾
+
+	HP_health: int				# 回血
+	ES_health: int				# 回盾
+
+
+ActionPair = tuple[Action, Action]
 
 
 @dataclass(eq=False, slots=True)
 class Fighting:
-	player: Fighter
-	enemy: Fighter
-	# 懒得解析对战记录了
+	player: Fighter					# 自己
+	enemy: Fighter					# 敌人
+	actions: Sequence[ActionPair]	# 过程记录
 
 
 class PKApi:
@@ -78,6 +104,19 @@ class PKApi:
 	def fight_creep(self):
 		html = self.api.fyg_v_intel(VS.Creeps)
 		html = etree.HTML(html)
+		rows = html.xpath("/html/body/div/div")
+
+		fs = rows[0].xpath("div/div[1]/div[1]")
+		r,t = fs[0].getchildren()
+
+		# 看不到具体属性
+		e = []
+		for button in r:
+			e.append(parse_item_button(button))
+
+		for i in range(1, len(rows) - 2, 2):
+			state, attrs = rows[i], rows[i+1]
+
 
 
 	def pillage(self):

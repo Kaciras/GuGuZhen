@@ -67,6 +67,7 @@ class ClickType(Enum):
 	DeleteCard = 11	 	# 销毁护身符
 	RefreshBeach = 12   # 强制刷新海滩，每次 5 星沙
 	Rejuvenate = 13		# 恢复体力到 100
+	Rebuild = 13		# 重置卡片的加点
 	Pillage = 16	 	# 搜刮资源
 	Wish = 18	 		# 许愿
 	ReWish = 19	 		# 重随许愿点
@@ -140,4 +141,7 @@ class FYGClient:
 			"id": target.value,
 			"safeid": self.safe_id
 		}
-		self.client.post("/fyg_v_intel.php", data=form)
+		r=self.client.post("/fyg_v_intel.php", data=form)
+		r.raise_for_status()
+		return r.text
+
