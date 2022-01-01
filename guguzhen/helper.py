@@ -31,13 +31,9 @@ def _print_hash_list(items):
 	"""打印物品的 hash 值，10 个一行跟游戏一致"""
 	items = tuple(items)
 	for i in range(0, len(items), 10):
-		for e in items[i:i + 10]:
-			h = item_hash(e)
-			print(f"'{h}'", end="")
-
-			if e != items[-1]:
-				print(", ", end="")
-		print()
+		hs = (f"'{item_hash(e)}'" for e in items[i:i + 10])
+		line = ", ".join(hs)
+		print(line + "," if i + 10 < len(items) else line)
 
 
 def item_hash(item: Item):
@@ -73,7 +69,7 @@ def item_hash(item: Item):
 	return urlsafe_b64encode(digest).decode()
 
 
-def print_items(api: GuGuZhen, short=True):
+def print_items(api: GuGuZhen, short: bool):
 	"""
 	在控制台中输出所有拥有的物品。
 
@@ -86,7 +82,7 @@ def print_items(api: GuGuZhen, short=True):
 		print_fn = _full_print
 
 	equip = api.character.get_info()
-	items = api.items.get_repository()
+	items = api.items.get_info()
 
 	print(f"\n[正在使用的]")
 	print_fn([equip.weapon, equip.bracelet,

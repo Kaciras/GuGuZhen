@@ -5,7 +5,8 @@ import dotenv
 import fire
 
 from guguzhen.api import GuGuZhen
-from guguzhen.helper import print_cards, print_equipments
+from guguzhen.api.base import ClientVersionError
+from guguzhen.helper import print_cards, print_items
 from play import actions
 
 dotenv.load_dotenv()
@@ -19,11 +20,11 @@ cookies = {
 class GuGuZhenCli:
 
 	@staticmethod
-	def items():
+	def items(short=False):
 		"""查看卡片和装备"""
 		api = GuGuZhen(cookies)
 		print_cards(api)
-		print_equipments(api)
+		print_items(api, short)
 
 	@staticmethod
 	def play():
@@ -31,12 +32,15 @@ class GuGuZhenCli:
 		api = GuGuZhen(cookies)
 		api.fetch_safeid()
 
-		for action in actions:
-			api.rest()
-			action.run(api)
+		try:
+			for action in actions:
+				api.rest()
+				action.run(api)
 
-		api.save_cookies()
-		logging.info("Completed.")
+			api.save_cookies()
+			logging.info("Completed.")
+		except ClientVersionError as e:
+			logging.warning(str(e))
 
 
 if __name__ == '__main__':
