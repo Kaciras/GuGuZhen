@@ -1,9 +1,6 @@
-from guguzhen.api import GuGuZhen
-
-def test_get_gift_pool(fyg_server):
+def test_get_gift_pool(api, fyg_server):
 	fyg_server.mock_res("fyg_gift.html")
 
-	api = GuGuZhen({})
 	pool, base = api.gift.get_pool()
 
 	assert pool["贝壳"] == 114514
@@ -21,10 +18,9 @@ def test_get_gift_pool(fyg_server):
 	fyg_server.verify("/fyg_gift.php")
 
 
-def test_get_gifts(fyg_server):
+def test_get_gifts(api, fyg_server):
 	fyg_server.mock_res("giftop.html")
 
-	api = GuGuZhen({})
 	opened = api.gift.get_gifts()
 
 	assert len(opened) == 1

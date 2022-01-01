@@ -4,9 +4,25 @@ from urllib.parse import parse_qsl
 from pytest import fixture
 from pytest_httpx import HTTPXMock
 
-_safe_id = "abc123"
+from guguzhen.api import GuGuZhen
 
 _fixtures = Path(__file__).parent.parent.joinpath("fixtures")
+
+_safe_id = "abc123"
+
+_api_instance = GuGuZhen({})
+_api_instance.safe_id = _safe_id
+
+
+@fixture
+def api():
+	return _api_instance
+
+
+@fixture
+def fyg_server(httpx_mock):
+	return FYGServerMock(httpx_mock)
+
 
 class FYGServerMock:
 	"""
@@ -34,8 +50,3 @@ class FYGServerMock:
 	def verify_click(self, **kwargs):
 		kwargs["safeid"] = _safe_id
 		self.verify("/fyg_click.php", "POST", **kwargs)
-
-
-@fixture
-def fyg_server(httpx_mock):
-	return FYGServerMock(httpx_mock)

@@ -1,10 +1,9 @@
-from guguzhen.api import GuGuZhen, Talent, Card
+from guguzhen.api import Talent, Card
 
 
-def test_get_info(fyg_server):
+def test_get_info(api, fyg_server):
 	fyg_server.mock_res("ReadCharacter.html")
 
-	api = GuGuZhen({})
 	info = api.character.get_info()
 
 	assert info.weapon.level == 157
@@ -12,10 +11,9 @@ def test_get_info(fyg_server):
 	fyg_server.verify_read(f="9")
 
 
-def test_get_talent(fyg_server):
+def test_get_talent(api, fyg_server):
 	fyg_server.mock_res("ReadTalent.html")
 
-	api = GuGuZhen({})
 	info = api.character.get_talent()
 
 	assert info.halo == 167.89
@@ -24,10 +22,9 @@ def test_get_talent(fyg_server):
 	fyg_server.verify_read(f="5")
 
 
-def test_get_cards(fyg_server):
+def test_get_cards(api, fyg_server):
 	fyg_server.mock_res("ReadCards.html")
 
-	api = GuGuZhen({})
 	cards = api.character.get_cards()
 
 	assert len(cards) == 5

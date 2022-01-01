@@ -1,10 +1,9 @@
-from guguzhen.api import GuGuZhen, PKRank
+from guguzhen.api import PKRank
 
 
-def test_get_pk_info(fyg_server):
+def test_get_pk_info(api, fyg_server):
 	fyg_server.mock_res("ReadPK.html")
 
-	api = GuGuZhen({})
 	info = api.pk.get_info()
 
 	fyg_server.verify_read(f="12")
@@ -15,18 +14,15 @@ def test_get_pk_info(fyg_server):
 	assert info.strengthen == 2
 
 
-def test_vs_creep(fyg_server):
+def test_vs_creep(api, fyg_server):
 	fyg_server.mock_res("VIntel.html")
 
-	api = GuGuZhen({})
 	fighting = api.pk.fight_creep()
 
 
-def test_pillage(fyg_server):
+def test_pillage(api, fyg_server):
 	fyg_server.mock_res("ClickPillage.html")
 
-	api = GuGuZhen({})
-	api.safe_id = _safe_id
 	trophy = api.pk.pillage()
 
 	fyg_server.verify_click(c="16")
