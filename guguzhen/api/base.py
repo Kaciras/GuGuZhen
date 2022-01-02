@@ -1,15 +1,18 @@
-import json
 import re
 from enum import Enum
+from http.cookiejar import LWPCookieJar
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
 from httpx import Cookies, Client
 from lxml import etree
 
-_HOST = "https://www.guguzhen.com"
+_FORUM = "https://bbs.9shenmi.com"
 
-_STORE = Path("data/cookies.json")
+_BASE_URL = "https://www.guguzhen.com"
+_HOST = "www.guguzhen.com"
+
+_STORE = Path("data/cookies.txt")
 
 # 虽然咕咕镇没有反爬，但还是习惯模仿一下浏览器。
 _HEADERS = {
@@ -39,7 +42,7 @@ class ReadType(Enum):
 	Beach = 1			# 海滩装备
 	Bag = 2				# 海滩背包
 	Talent = 5			# 光环天赋
-	Repository = 7 		# 武器装备
+	Equipments = 7 		# 武器装备
 	CardList = 8   		# 角色卡片列表
 	Character = 9  		# 我的战斗信息
 	Gifts = 10     		# 抽奖
@@ -78,28 +81,31 @@ class ClickType(Enum):
 # @formatter:on
 
 
-_sidp = re.compile(r"&safeid=([0-9a-z]+)", re.MULTILINE)
+_safeid_param = re.compile(r"&safeid=([0-9a-z]+)", re.MULTILINE)
 
 
 class FYGClient:
 	"""
-	说实话我也不知道 fyg 是什么意思。
+	说实话我也不知道 fyg 是什么意思，可能指绯月Gal？
 	"""
 
-	def __init__(self, login_info, host=_HOST):
+	def __init__(self, login_info: dict, base=_BASE_URL):
 		self.safe_id = None
 
+		jar = LWPCookieJar(_STORE)
 		try:
-			with _STORE.open() as fp:
-				cookies = Cookies(json.load(fp))
+			jar.load()
 		except FileNotFoundError:
-			cookies = Cookies(login_info)
+			cookies = Cookies(jar)
+			for k, v in login_info.items():
+				cookies.set(k, v, _HOST)
 
 		self.client = Client(
 			http2=True,
 			headers=_HEADERS,
-			base_url=host,
-			cookies=cookies
+			base_url=base,
+			cookies=jar,
+			follow_redirects=True
 		)
 
 	def _check_safe_id(self):
@@ -109,13 +115,42 @@ class FYGClient:
 
 	def save_cookies(self):
 		_STORE.parent.mkdir(exist_ok=True)
-		with _STORE.open("w") as fp:
-			values = dict(self.client.cookies)
-			json.dump(values, fp)
+		cast(LWPCookieJar, self.client.cookies.jar).save()
 
-	def fetch_safeid(self):
+	def login(self, user: str, password: str):
+		data = {
+			"cktime": "31536000",
+			"hideid": 0,
+			"step": 2,
+			"lgt": 1,
+			"pwuser": user,
+			"pwpwd": password,
+		}
+		r = self.client.post(_FORUM + "/login.php", data=data)
+		r.raise_for_status()
+
+		if "您已经顺利登录" not in r.text:
+			raise FygAPIError("登录失败，请检查输入的信息")
+
+	def connect(self):
+		"""
+		抓取 safeid，顺便检测当前的 Cookies 是否有效，如果失效则尝试刷新。
+
+		刷新可能需要较长的时间，也不知道是网络问题还是服务端限制。
+		"""
 		r = self.client.get("/fyg_index.php")
-		self.safe_id = _sidp.search(r.text).group(1)
+		r.raise_for_status()
+
+		match = _safeid_param.search(r.text)
+		if match is None:
+			r = self.client.get(_FORUM + "/fyg_sjcdwj.php?go=play", timeout=15)
+			r.raise_for_status()
+			match = _safeid_param.search(r.text)
+
+		if match:
+			self.safe_id = match.group(1)
+		else:
+			raise FygAPIError("safeid 获取失败，请尝试重新登录，或者程序出了 BUG")
 
 	def get_page(self, path):
 		r = self.client.get(path)
@@ -141,7 +176,6 @@ class FYGClient:
 			"id": target.value,
 			"safeid": self.safe_id
 		}
-		r=self.client.post("/fyg_v_intel.php", data=form)
+		r = self.client.post("/fyg_v_intel.php", data=form)
 		r.raise_for_status()
 		return r.text
-
