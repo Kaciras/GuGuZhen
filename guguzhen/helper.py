@@ -97,9 +97,10 @@ def print_items(api: GuGuZhen, short: bool):
 
 def print_cards(api: GuGuZhen):
 	"""在控制台中输出所有的卡片"""
+	cards = api.character.get_cards()
 	print("\n[角色卡片]")
 
-	for card in api.character.get_cards():
+	for card in cards:
 		color = Fore.RESET
 		if card.in_use:
 			color = Fore.BLUE

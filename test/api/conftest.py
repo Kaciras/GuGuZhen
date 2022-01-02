@@ -10,7 +10,7 @@ _fixtures = Path(__file__).parent.parent.joinpath("fixtures")
 
 _safe_id = "abc123"
 
-_api_instance = GuGuZhen({})
+_api_instance = GuGuZhen()
 
 
 @fixture
