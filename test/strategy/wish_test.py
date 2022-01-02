@@ -9,7 +9,7 @@ from guguzhen.strategy import Wish
 
 @fixture
 def mock_api():
-	return Mock(spec=GuGuZhen({}))
+	return Mock(spec=GuGuZhen)
 
 
 _buffers = WishBuffers(1, 2, 3, 4, 5, 6, 7, 8, 9, 8, 7, 6, 5)

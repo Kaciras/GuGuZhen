@@ -4,7 +4,7 @@ from http.cookiejar import LWPCookieJar
 from pathlib import Path
 from typing import Literal, cast
 
-from httpx import Cookies, Client
+from httpx import Client
 from lxml import etree
 
 _FORUM = "https://bbs.9shenmi.com"
@@ -89,16 +89,20 @@ class FYGClient:
 	说实话我也不知道 fyg 是什么意思，可能指绯月Gal？
 	"""
 
-	def __init__(self, login_info: dict, base=_BASE_URL):
+	def __init__(self, store=_STORE, base=_BASE_URL, forum=_FORUM):
+		"""
+		:param store: Cookies 保存位置，不同的号请设置不同的路径
+		:param base: 咕咕镇网站的 Origin
+		:param forum: 绯月 GalGame 网站的 Origin
+		"""
 		self.safe_id = None
+		self.forum = forum
 
-		jar = LWPCookieJar(_STORE)
+		jar = LWPCookieJar(store)
 		try:
 			jar.load()
 		except FileNotFoundError:
-			cookies = Cookies(jar)
-			for k, v in login_info.items():
-				cookies.set(k, v, _HOST)
+			pass
 
 		self.client = Client(
 			http2=True,
@@ -110,11 +114,11 @@ class FYGClient:
 
 	def _check_safe_id(self):
 		if self.safe_id is None:
-			raise Exception("请先调用 fetch_safeid()")
+			raise Exception("请先调用 connect()")
 		return self.safe_id
 
 	def save_cookies(self):
-		_STORE.parent.mkdir(exist_ok=True)
+		_STORE.parent.mkdir(parents=True, exist_ok=True)
 		cast(LWPCookieJar, self.client.cookies.jar).save()
 
 	def login(self, user: str, password: str):
@@ -126,11 +130,11 @@ class FYGClient:
 			"pwuser": user,
 			"pwpwd": password,
 		}
-		r = self.client.post(_FORUM + "/login.php", data=data)
+		r = self.client.post(self.forum + "/login.php", data=data)
 		r.raise_for_status()
 
 		if "您已经顺利登录" not in r.text:
-			raise FygAPIError("登录失败，请检查输入的信息")
+			raise FygAPIError("登录失败，请检查输入的信息。")
 
 	def connect(self):
 		"""
@@ -140,10 +144,10 @@ class FYGClient:
 		"""
 		r = self.client.get("/fyg_index.php")
 		r.raise_for_status()
-
 		match = _safeid_param.search(r.text)
+
 		if match is None:
-			r = self.client.get(_FORUM + "/fyg_sjcdwj.php?go=play", timeout=15)
+			r = self.client.get(self.forum + "/fyg_sjcdwj.php?go=play", timeout=15)
 			r.raise_for_status()
 			match = _safeid_param.search(r.text)
 

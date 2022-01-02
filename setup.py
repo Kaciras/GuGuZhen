@@ -14,6 +14,5 @@ setup(
 		"lxml",
 		"pytest",
 		"pytest-httpx",
-		"python-dotenv",
 	],
 )
