@@ -1,18 +1,14 @@
 import re
 from enum import Enum
-from http.cookiejar import LWPCookieJar
-from pathlib import Path
-from typing import Literal, cast
+from http.cookiejar import CookieJar
+from typing import Literal
 
 from httpx import Client
 from lxml import etree
 
-_FORUM = "https://bbs.9shenmi.com"
+_FORUM_ORIGIN = "https://bbs.9shenmi.com"
 
-_BASE_URL = "https://www.guguzhen.com"
-_HOST = "www.guguzhen.com"
-
-_STORE = Path("data/cookies.txt")
+_GAME_ORIGIN = "https://www.guguzhen.com"
 
 # 虽然咕咕镇没有反爬，但还是习惯模仿一下浏览器。
 _HEADERS = {
@@ -89,26 +85,23 @@ class FYGClient:
 	说实话我也不知道 fyg 是什么意思，可能指绯月Gal？
 	"""
 
-	def __init__(self, store=_STORE, base=_BASE_URL, forum=_FORUM):
+	def __init__(self, forum_origin: str = None,
+				 game_origin: str = None,
+				 cookies: CookieJar = None):
 		"""
-		:param store: Cookies 保存位置，不同的号请设置不同的路径
-		:param base: 咕咕镇网站的 Origin
-		:param forum: 绯月 GalGame 网站的 Origin
+		:param forum_origin: 绯月 GalGame 网站的 Origin
+		:param game_origin: 咕咕镇网站的 Origin
+		:param cookies: Cookies 存储，用于外部导入和保存 Cookies
 		"""
 		self.safe_id = None
-		self.forum = forum
-
-		jar = LWPCookieJar(store)
-		try:
-			jar.load()
-		except FileNotFoundError:
-			pass
+		self.forum = forum_origin or _FORUM_ORIGIN
+		self.game = game_origin or _GAME_ORIGIN
 
 		self.client = Client(
 			http2=True,
 			headers=_HEADERS,
-			base_url=base,
-			cookies=jar,
+			base_url=self.game,
+			cookies=cookies,
 			follow_redirects=True
 		)
 
@@ -117,11 +110,13 @@ class FYGClient:
 			raise Exception("请先调用 connect()")
 		return self.safe_id
 
-	def save_cookies(self):
-		_STORE.parent.mkdir(parents=True, exist_ok=True)
-		cast(LWPCookieJar, self.client.cookies.jar).save()
+	def _post(self, url, form=None):
+		r = self.client.post(url, data=form)
+		r.raise_for_status()
+		return r.text
 
 	def login(self, user: str, password: str):
+		"""通过用户名和密码登录绯月论坛"""
 		data = {
 			"cktime": "31536000",
 			"hideid": 0,
@@ -130,10 +125,9 @@ class FYGClient:
 			"pwuser": user,
 			"pwpwd": password,
 		}
-		r = self.client.post(self.forum + "/login.php", data=data)
-		r.raise_for_status()
+		text = self._post(self.forum + "/login.php", data)
 
-		if "您已经顺利登录" not in r.text:
+		if "您已经顺利登录" not in text:
 			raise FygAPIError("登录失败，请检查输入的信息。")
 
 	def connect(self):
@@ -154,7 +148,7 @@ class FYGClient:
 		if match:
 			self.safe_id = match.group(1)
 		else:
-			raise FygAPIError("safeid 获取失败，请尝试重新登录，或者程序出了 BUG")
+			raise FygAPIError("safeid 获取失败，请尝试重新登录论坛，或者程序出了 BUG")
 
 	def get_page(self, path):
 		r = self.client.get(path)
@@ -163,23 +157,16 @@ class FYGClient:
 
 	def fyg_read(self, type_, **kwargs):
 		kwargs["f"] = str(type_.value)
-		r = self.client.post("/fyg_read.php", data=kwargs)
-		r.raise_for_status()
-		return r.text
+		return self._post("/fyg_read.php", kwargs)
 
 	def fyg_click(self, type_, **kwargs):
 		kwargs["c"] = type_.value
 		kwargs["safeid"] = self._check_safe_id()
-
-		r = self.client.post("/fyg_click.php", data=kwargs)
-		r.raise_for_status()
-		return r.text
+		return self._post("/fyg_click.php", kwargs)
 
 	def fyg_v_intel(self, target: VS):
 		form = {
 			"id": target.value,
 			"safeid": self.safe_id
 		}
-		r = self.client.post("/fyg_v_intel.php", data=form)
-		r.raise_for_status()
-		return r.text
+		return self._post("/fyg_v_intel.php", form)

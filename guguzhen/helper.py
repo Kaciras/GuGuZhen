@@ -1,6 +1,8 @@
 from base64 import urlsafe_b64encode
 from hashlib import sha256
 
+import inquirer
+from browser_cookie3 import *
 from colorama import Fore
 
 from guguzhen.api import GuGuZhen, Item, Amulet
@@ -105,3 +107,26 @@ def print_cards(api: GuGuZhen):
 		if card.in_use:
 			color = Fore.BLUE
 		print(f"{color}{card}{Fore.RESET}")
+
+
+def scan_browser(origin):
+	browsers = (Chrome, Chromium, Opera, Brave, Edge, Firefox)
+	found = {}
+
+	for browser in browsers:
+		try:
+			cookies = browser(None, origin).load()
+			if len(cookies) > 0:
+				found[browser.__name__] = cookies
+		except BrowserCookieError:
+			pass
+
+	if len(found) == 1:
+		return found.popitem()[1]
+	elif len(found) > 1:
+		msg = "在以下浏览器中找到了咕咕镇的 Cookies，复制哪个？"
+		question = inquirer.List("name", msg, found)
+		answers = inquirer.prompt([question], raise_keyboard_interrupt=True)
+		return found[answers["name"]]
+	else:
+		return print("在所有的浏览器中都未找到咕咕镇的 Cookie")

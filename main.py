@@ -1,81 +1,70 @@
 import logging
 from http.cookiejar import LWPCookieJar
+from pathlib import Path
+from typing import cast
+from urllib.parse import urlsplit
 
 import fire
-import inquirer
-from browser_cookie3 import *
 
 from guguzhen.api import GuGuZhen
 from guguzhen.api.base import ClientVersionError
-from guguzhen.helper import print_cards, print_items
+from guguzhen.helper import print_cards, print_items, scan_browser
 from play import actions
 
-
-def choose(cookies_map):
-	question = inquirer.List("name", "在以下浏览器中找到了咕咕镇的 Cookies，复制哪个？", cookies_map)
-	answers = inquirer.prompt([question], raise_keyboard_interrupt=True)
-	return cookies_map[answers["name"]]
-
+_STORE = Path("data/cookies.txt")
 
 class GuGuZhenCli:
 
-	@staticmethod
-	def clone():
+	def __init__(self, forum=None, game=None):
+		"""
+		:param forum: 绯月GalGame 网站的 Origin
+		:param game: 咕咕镇网站的 Origin
+		"""
+		cookies = LWPCookieJar(_STORE)
+		try:
+			cookies.load()
+		except FileNotFoundError:
+			pass
+
+		self.api = GuGuZhen(forum, game, cookies)
+
+	def _save_cookies(self):
+		_STORE.parent.mkdir(parents=True, exist_ok=True)
+		cast(LWPCookieJar, self.api.client.cookies.jar).save()
+
+	def clone(self):
 		"""复制浏览器的 Cookies"""
-		browsers = (Chrome, Chromium, Opera, Brave, Edge, Firefox)
-		found = {}
+		url = urlsplit(self.api.game)
+		src = scan_browser(url.hostname)
 
-		for browser in browsers:
-			try:
-				cookies = browser(domain_name="www.guguzhen.com").load()
-				if len(cookies) > 0:
-					found[browser.__name__] = cookies
-			except BrowserCookieError:
-				pass
-
-		if len(found) == 0:
-			print("在所有的浏览器中都未找到相关 Cookie")
-			return
-		elif len(found) > 1:
-			jar = choose(found)
-		else:
-			jar = found.popitem()[1]
-
-		dist = LWPCookieJar()
-		for cookie in jar:
+		dist = self.api.client.cookies.jar
+		for cookie in src:
 			dist.set_cookie(cookie)
 
-		print(dist)
+		self._save_cookies()
 
-	@staticmethod
-	def login(user, password):
+	def login(self, user, password):
 		"""使用用户名和密码登录"""
-		api = GuGuZhen()
-		api.login(user, password)
-		api.save_cookies()
+		self.api.login(user, password)
+		self._save_cookies()
 
-	@staticmethod
-	def items(short=False):
+	def items(self, short=False):
 		"""查看卡片和装备"""
-		api = GuGuZhen()
-		api.connect()
+		self.api.connect()
+		print_cards(self.api)
+		print_items(self.api, short)
+		self._save_cookies()
 
-		print_cards(api)
-		print_items(api, short)
-		api.save_cookies()
-
-	@staticmethod
-	def play():
+	def play(self):
 		"""运行自动游戏脚本"""
-		api = GuGuZhen()
-		api.connect()
-
 		try:
-			for action in actions:
-				api.rest()
-				action.run(api)
+			self.api.connect()
 
-			api.save_cookies()
+			for action in actions:
+				self.api.rest()
+				action.run(self.api)
+
+			self._save_cookies()
 			logging.info("Completed.")
 		except ClientVersionError as e:
 			logging.warning(str(e))
