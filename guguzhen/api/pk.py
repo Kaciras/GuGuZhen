@@ -1,15 +1,17 @@
 import re
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Tuple, Sequence
+from typing import Tuple, Sequence, Literal
 
 from lxml import etree
 
-from . import parse_item_button
+from . import parse_item_button, EquipConfig
 from .base import FYGClient, ReadType, VS, ClickType, LimitReachedError, Role
 
 _exp = re.compile(r"获得了 (\d+) ([^<]+)")
 _base = re.compile(r"基准值:(\d+)，随机范围([0-9.]+)-([0-9.]+)倍")
+
+CreepType = Literal["铁皮木人", "嗜血的迅捷蛛", "魔灯之灵", "憨憨的食铁兽"]
 
 
 class PKRank(IntEnum):
@@ -37,6 +39,8 @@ class PKInfo:
 
 @dataclass(eq=False, slots=True)
 class Trophy:
+	"""一次搜刮资源的结果"""
+
 	value: int					# 数值
 	type: str					# 资源类型
 	base: int					# 基准值
@@ -48,7 +52,13 @@ class Fighter:
 	name: str				# 名字
 	role: Role				# 职业（卡片）
 	leval: int				# 等级
-	strengthen: int			# 强度（仅野怪）
+	equipment: EquipConfig	# 装备
+
+
+@dataclass(eq=False, slots=True)
+class Creep:
+	type: CreepType			# 名字
+	strengthen: float		# 强度
 
 
 States = tuple[str, int]

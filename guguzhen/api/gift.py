@@ -2,22 +2,24 @@ import re
 from dataclasses import dataclass
 from typing import Literal
 
+from lxml import etree
+
 from .base import FYGClient, ReadType, LimitReachedError, ClickType
 
 _gp = re.compile(r"(\d+)贝壳[\s+]+(\d+)星沙[\s+]+(\d+)件?装备[\s+]+(\d+)张?卡片[\s+]+([0-9.]+)%光环点数")
 
-_cp = re.compile(r"\s*([^+]+)\+([0-9.]+)\*(\d+)%")
+_gift_desc = re.compile(r"\s*([^+]+)\+([0-9.]+)\*(\d+)%")
 
-_gxp = re.compile(r"消耗 (\d+) 星沙", re.MULTILINE)
+_gxp = re.compile(r"消耗 <b>(\d+)</b> 星沙", re.MULTILINE)
 
 GiftType = Literal["贝壳", "星沙", "装备", "卡片", "光环"]
 
 
 @dataclass(eq=False, slots=True)
 class Gift:
-	type: GiftType
-	base: float
-	ratio: float
+	type: GiftType		# 礼物的类型
+	base: float			# 基本值
+	ratio: float		# 倍率
 
 	@property
 	def value(self):
@@ -32,6 +34,10 @@ class GiftApi:
 	def get_pool(self):
 		"""
 		获取今日的奖池数据,包含总数和我的基本数值两项。
+
+		【注意：光环的值】
+		光环的单位是点数，比如 123.45% 光环将返回 123.45 而不是 1.2345，
+		因为光环并不与其它数据做运算，它的百分比无意义。
 
 		:return: (总共, 基本数值) 二元组
 		"""
@@ -58,17 +64,18 @@ class GiftApi:
 
 	def get_gifts(self):
 		html = self.api.fyg_read(ReadType.Gifts)
-		cards, index = {}, 0
+		html = etree.HTML(html)
 
-		for el in html.iter():
-			if el.tag != "button":
-				continue
-			index += 1
-			match = _cp.match(el.text)
+		cards, index = {}, 0
+		for i, el in enumerate(html.xpath("//button")):
+			match = _gift_desc.match(el.text)
 			if match is None:
 				continue
-			info = Gift(match.group(1), float(match.group(2)), float(match.group(3)) / 100)
-			cards[index] = info
+			cards[i] = Gift(
+				match.group(1),
+				float(match.group(2)),
+				float(match.group(3)) / 100
+			)
 
 		return cards
 
@@ -84,5 +91,3 @@ class GiftApi:
 		match = _gxp.search(res_text)
 		if match:
 			raise LimitReachedError()
-
-

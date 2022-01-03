@@ -37,18 +37,18 @@ class Grade(IntEnum):
 @dataclass(frozen=True, slots=True)
 class EquipAttr:
 	type: str   	# 属性名
-	ratio: int  	# 倍率
+	ratio: float  	# 倍率
 	value: int  	# 属性值
 
 	def __str__(self):
-		return f"[{self.ratio}% {self.type} {self.value}]"
+		return f"[{self.ratio:.0%} {self.type} {self.value}]"
 
 
 @dataclass(frozen=True, slots=True)
 class AmuletAttr:
 	type: str		# 增加的属性
-	value: int		# 增加量
-	unit: str		# 单位，点或%
+	value: int		# 增加量（若是百分比需要除以 100）
+	unit: str		# 单位，"点" 或 "%"
 
 	def __str__(self):
 		return f"[{self.type} +{self.value}{self.unit}]"
@@ -131,10 +131,10 @@ def _parse_amulet_attr(paragraph: etree.ElementBase):
 def _parse_equip_attr(paragraph: etree.ElementBase):
 	label, text = paragraph.iterchildren()
 
-	ratio = int(label.text[:-1])
+	ratio = int(label.text[:-1]) / 100
 	type_, value = text.text.split(" ")
 
-	return EquipAttr(type_, ratio, int(value[:-1]), )
+	return EquipAttr(type_, ratio, int(value[:-1]))
 
 
 # xxx('<id>','Lv.1 稀有苹果护身符')、或者 xxx(<id>)
@@ -149,7 +149,7 @@ class ItemApi:
 
 	def get_info(self):
 		"""获取 我的角色/武器装备 页面的信息"""
-		html = self.api.fyg_read(ReadType.Repository)
+		html = self.api.fyg_read(ReadType.Equipments)
 		html = etree.HTML(html)
 
 		buttons = html.xpath("/html/body/div[1]/div/button")

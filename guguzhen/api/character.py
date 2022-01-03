@@ -1,21 +1,23 @@
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable
+from typing import Iterable, Literal
 
 from lxml import etree
 
-from .base import ReadType, FYGClient, Role, ClickType, FygAPIError
+from .base import ReadType, FYGClient, ClickType, FygAPIError
 from .items import Equipment, parse_item_button
 
 _card_attrs_re = re.compile(r"(\d+) 最大等级<br/>(\d+) 技能位<br/>(\d+)% 品质")
 
 _highlight_code = re.compile(r'\$\("#tf(\d+)"\)\.attr\("class","btn btn-primary"\);')
 
+Role = Literal["梦", "默", "薇", "艾", "冥", "琳", "伊", "命"]
+
 
 class Talent(Enum):
 	"""
-	所有的光环天赋，值是对应的 ID，名字懒得翻译成英文了。
+	所有的光环天赋，值是对应的 ID，名字懒得翻译。
 	"""
 
 	启程之誓 = 101
@@ -44,7 +46,7 @@ class Talent(Enum):
 
 	@property
 	def cost(self):
-		"""技能需要的光环数量"""
+		"""技能需要的光环点数"""
 		rank = self.value // 100
 		if rank == 1:
 			return 10
@@ -58,8 +60,16 @@ class Talent(Enum):
 
 @dataclass(eq=False)
 class TalentPanel:
-	halo: float
-	talent: tuple[Talent]
+	"""
+	我的角色 / 光环天赋页面。
+
+	【注意：光环的值】
+	光环的单位是点数，比如 123.45% 光环表示为 123.45 而不是 1.2345，
+	因为光环并不与其它数据做运算，它的百分比无意义。
+	"""
+
+	halo: float				# 光环值
+	talent: tuple[Talent]	# 已选择的天赋
 
 
 @dataclass
@@ -76,7 +86,7 @@ class EquipConfig:
 class Card:
 	id: int			# 卡片 ID
 	level: int		# 等级
-	role: Role		# 类型
+	role: Role		# 职业
 	lv_max: int		# 最大等级
 	skills: int		# 技能位
 	quality: float	# 品质
@@ -88,7 +98,7 @@ class Card:
 			f"Lv.{self.level}/{self.lv_max}",
 			str(self.role),
 			f"{self.skills}技能位",
-			f"{self.quality}%品质"
+			f"{self.quality:.0%}品质"
 		]
 
 		if self.in_use:

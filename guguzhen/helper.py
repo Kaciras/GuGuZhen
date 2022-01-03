@@ -1,5 +1,6 @@
 from base64 import urlsafe_b64encode
 from hashlib import sha256
+from struct import pack
 
 import inquirer
 from browser_cookie3 import *
@@ -62,8 +63,8 @@ def item_hash(item: Item):
 		m.update(item.level.to_bytes(2, "big"))
 		for attr in item.attrs:
 			m.update(attr.type.encode())
+			m.update(pack(">f", attr.ratio))
 			m.update(attr.value.to_bytes(2, "big"))
-			m.update(attr.ratio.to_bytes(2, "big"))
 		if item.mystery:
 			m.update(item.mystery.encode())
 

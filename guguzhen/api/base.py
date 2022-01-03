@@ -1,7 +1,6 @@
 import re
 from enum import Enum
 from http.cookiejar import CookieJar
-from typing import Literal
 
 from httpx import Client
 from lxml import etree
@@ -16,9 +15,6 @@ _HEADERS = {
 	"X-Requested-With": "XMLHttpRequest",
 	"Accept-Language": "zh-CN,en-US;q=0.7,en;q=0.3",
 }
-
-Role = Literal["梦", "默", "薇", "艾", "冥", "琳", "伊", "命", "野怪"]
-
 
 class ClientVersionError(Exception):
 	"""与服务端版本不匹配"""
