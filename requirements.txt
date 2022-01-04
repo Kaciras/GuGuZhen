@@ -1,0 +1,6 @@
+httpx[http2]
+colorama
+fire
+lxml
+inquirer
+browser_cookie3

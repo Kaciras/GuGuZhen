@@ -12,9 +12,7 @@ setup(
 		"fire",
 		"httpx[http2]",
 		"inquirer",
-		"browser_cookie3",
 		"lxml",
-		"pytest",
-		"pytest-httpx",
+		"browser_cookie3",
 	],
 )
