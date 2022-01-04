@@ -10,3 +10,7 @@ def test_get_beach(api, fyg_server):
 	assert len(items) == 11
 	fyg_server.verify_read(f="1")
 
+def test_clear(api, fyg_server):
+	fyg_server.mock_res("ClickClearBeach.html")
+
+	api.beach.clear()

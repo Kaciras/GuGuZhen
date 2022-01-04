@@ -98,10 +98,9 @@ def _parse_item_list(buttons):
 	return id_and_item
 
 
-def parse_item_icon(button: etree.ElementBase):
+def grade_from_class(button: etree.ElementBase):
 	match = _color_class.search(button.get("class"))
-	grade = Grade(int(match.group(1)))
-	return grade, int(button.getchildren()[0].tail)
+	return Grade(int(match.group(1)))
 
 
 def parse_item_button(button: etree.ElementBase):
@@ -111,22 +110,23 @@ def parse_item_button(button: etree.ElementBase):
 	if not title:
 		return RandomCard
 
-	grade, level = parse_item_icon(button)
-	popup = button.get("data-content")
-	entries = etree.HTML(popup).xpath("/html/body/p")
+	grade = grade_from_class(button)
+	entries = etree.HTML(button.get("data-content")).xpath("/html/body/p")
 
 	# 护身符的 onclick 是两个参数。
 	match = _lvp.search(title)
 	if not match:
+		enhance = int(button.getchildren()[0].tail)
 		attrs = tuple(map(_parse_amulet_attr, entries))
-		return Amulet(grade, title, level, attrs)
+
+		return Amulet(grade, title, enhance, attrs)
 
 	# 剩下的情况就是装备。
-	_, name = match.groups()
 	attrs = tuple(map(_parse_equip_attr, entries[:4]))
 	mystery = entries[4].text if len(entries) > 4 else None
+	level, name = match.groups()
 
-	return Equipment(grade, name, level, attrs, mystery)
+	return Equipment(grade, name, int(level), attrs, mystery)
 
 
 def _parse_amulet_attr(paragraph: etree.ElementBase):

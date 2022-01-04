@@ -1,5 +1,5 @@
 def test_get_info(api, fyg_server):
-	fyg_server.mock_res("ReadRepository.html")
+	fyg_server.mock_res("ReadEquipments.html")
 
 	repo = api.items.get_info()
 
