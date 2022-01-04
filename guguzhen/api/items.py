@@ -64,11 +64,14 @@ class Amulet:
 
 @dataclass(frozen=True, slots=True)
 class Equipment:
-	grade: Grade			 # 装备品质
-	name: str				 # 物品名
-	level: int				 # 装备等级
-	attrs: tuple[EquipAttr]  # 属性列表
-	mystery: Optional[str]   # 神秘属性文本
+	"""装备物品，如果是 PK 记录则后两个属性为 None"""
+
+	grade: Grade						# 装备品质
+	name: str							# 物品名
+	level: int							# 装备等级
+
+	attrs: Optional[tuple[EquipAttr]]	# 属性列表
+	mystery: Optional[str]				# 神秘属性文本
 
 
 # 背包和仓库里的物品，可以是护身符或装备
@@ -95,31 +98,35 @@ def _parse_item_list(buttons):
 	return id_and_item
 
 
-def parse_item_button(button):
+def parse_item_icon(button: etree.ElementBase):
+	match = _color_class.search(button.get("class"))
+	grade = Grade(int(match.group(1)))
+	return grade, int(button.getchildren()[0].tail)
+
+
+def parse_item_button(button: etree.ElementBase):
 	title = button.get("title")
 
 	# 随机卡片标题为空
 	if not title:
 		return RandomCard
 
-	match = _color_class.search(button.get("class"))
-	grade = Grade(int(match.group(1)))
-	entries = etree.HTML(button.get("data-content")).xpath("/html/body/p")
+	grade, level = parse_item_icon(button)
+	popup = button.get("data-content")
+	entries = etree.HTML(popup).xpath("/html/body/p")
 
 	# 护身符的 onclick 是两个参数。
 	match = _lvp.search(title)
 	if not match:
-		enhance = int(button.getchildren()[0].tail)
 		attrs = tuple(map(_parse_amulet_attr, entries))
-
-		return Amulet(grade, title, enhance, attrs)
+		return Amulet(grade, title, level, attrs)
 
 	# 剩下的情况就是装备。
+	_, name = match.groups()
 	attrs = tuple(map(_parse_equip_attr, entries[:4]))
 	mystery = entries[4].text if len(entries) > 4 else None
-	level, name = match.groups()
 
-	return Equipment(grade, name, int(level), attrs, mystery)
+	return Equipment(grade, name, level, attrs, mystery)
 
 
 def _parse_amulet_attr(paragraph: etree.ElementBase):

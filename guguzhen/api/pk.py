@@ -5,11 +5,27 @@ from typing import Tuple, Sequence, Literal
 
 from lxml import etree
 
-from . import parse_item_button, EquipConfig
-from .base import FYGClient, ReadType, VS, ClickType, LimitReachedError, Role
+from .base import FYGClient, ReadType, VS, ClickType, LimitReachedError
+from .character import EquipConfig, Role
+from .items import Equipment, parse_item_icon
 
 _exp = re.compile(r"获得了 (\d+) ([^<]+)")
+
 _base = re.compile(r"基准值:(\d+)，随机范围([0-9.]+)-([0-9.]+)倍")
+
+_lv_pattern = re.compile(r"Lv\.(\d+)(?:\((\d+)%\))?")
+
+_spaces = re.compile("\s+")
+
+_icon_class_map = {
+	"icon icon-bolt text-danger fyg_f14": "AD",
+	"icon icon-bolt text-primary fyg_f14": "AP",
+	"icon icon-bolt text-warning fyg_f14": "TD",
+	"icon icon-minus text-danger fyg_f14": "HP_lose",
+	"icon icon-minus text-info fyg_f14": "ES_lose",
+	"icon icon-plus text-danger fyg_f14": "HP_health",
+	"icon icon-plus text-info fyg_f14": "ES_health",
+}
 
 CreepType = Literal["铁皮木人", "嗜血的迅捷蛛", "魔灯之灵", "憨憨的食铁兽"]
 
@@ -48,49 +64,79 @@ class Trophy:
 
 
 @dataclass(eq=False, slots=True)
-class Fighter:
-	name: str				# 名字
-	role: Role				# 职业（卡片）
-	leval: int				# 等级
-	equipment: EquipConfig	# 装备
+class Player:
+	name: str					# 名字
+	role: Role					# 职业（卡片）
+	leval: int					# 等级
+	equipment: EquipConfig		# 装备
 
 
 @dataclass(eq=False, slots=True)
 class Creep:
-	type: CreepType			# 名字
-	strengthen: float		# 强度
+	type: CreepType				# 名字
+	leval: int					# 等级
+	strengthen: float			# 强度
 
 
-States = tuple[str, int]
-
-
-@dataclass(eq=False, slots=True)
+@dataclass(init=False, eq=False, slots=True)
 class Action:
 	is_attack: bool				# 是攻击方？
-	state: Sequence[States]		# 技能和状态
+	state: Sequence[str]		# 技能和状态
 
 	HP: int						# 血量
 	ES: int						# 护盾
 
-	AD: int						# 物伤
-	AP: int						# 法伤
-	TD: int						# 真伤
+	AD: int = None				# 物伤
+	AP: int = None				# 法伤
+	TD: int = None				# 真伤
 
-	HP_lose: int				# 掉血
-	ES_lose: int				# 掉盾
+	HP_lose: int = None			# 掉血
+	ES_lose: int = None			# 掉盾
 
-	HP_health: int				# 回血
-	ES_health: int				# 回盾
+	HP_health: int = None		# 回血
+	ES_health: int = None		# 回盾
 
 
 ActionPair = tuple[Action, Action]
 
 
 @dataclass(eq=False, slots=True)
-class Fighting:
-	player: Fighter					# 自己
-	enemy: Fighter					# 敌人
-	actions: Sequence[ActionPair]	# 过程记录
+class Battle:
+	player: Player					# 自己
+	enemy: Player					# 敌人
+	actions: Sequence[ActionPair]	# 过程
+
+
+def _parse_fighter(equips, info):
+	h3 = info.getchildren()[0]
+	lv, role = _spaces.split(h3.getchildren()[0].tail)
+
+	if role.startswith("Lv"):
+		lv, role = role, lv
+
+	match = _lv_pattern.match(lv)
+	if role == "野怪":
+		level, strengthen = match.groups()
+		return Creep(h3.text, int(level), int(strengthen) / 100)
+
+	# TODO: 如果装备不齐？懒得新建小号测试，等遇到了再说
+	e = []
+	for button in equips.iterchildren():
+		name = button.get("title")
+		gradle, level = parse_item_icon(button)
+		e.append(Equipment(gradle, name, level, None, None))
+
+	ec = EquipConfig(*e)
+	return Player(h3.text, role, int(match.group(1)), ec)
+
+
+def _parse_values(action, icon_col, col2):
+	for icon in icon_col.xpath("p/i"):
+		key = _icon_class_map[icon.get("class")]
+		setattr(action, key, int(icon.text))
+
+	es, hp = col2.xpath("span/text()")
+	action.ES, action.HP = int(es), int(hp)
 
 
 class PKApi:
@@ -111,23 +157,34 @@ class PKApi:
 			int(spans[-1].text),
 		)
 
-	def fight_creep(self):
-		html = self.api.fyg_v_intel(VS.Creeps)
+	def battle(self, target: VS):
+		html = self.api.fyg_v_intel(target)
 		html = etree.HTML(html)
 		rows = html.xpath("/html/body/div/div")
 
 		fs = rows[0].xpath("div/div[1]/div[1]")
-		r,t = fs[0].getchildren()
+		player = _parse_fighter(*fs[0].getchildren())
+		enemy = _parse_fighter(*reversed(fs[1].getchildren()))
 
-		# 看不到具体属性
-		e = []
-		for button in r:
-			e.append(parse_item_button(button))
+		actions = []
+		for i in range(1, len(rows) - 2, 3):
+			act1, act2 = Action(), Action()
 
-		for i in range(1, len(rows) - 2, 2):
-			state, attrs = rows[i], rows[i+1]
+			p1 = rows[i].xpath("div[1]/p")[0]
+			act1.is_attack = "bg-special" in p1.get("class")
+			act2.is_attack = not act1.is_attack
 
+			act1.state = p1.xpath("i/b/text()")
+			act2.state = rows[i].xpath("div[2]/p/i/b/text()")
 
+			h = rows[i + 1].getchildren()
+			la, ls, rs, ra =  h
+			_parse_values(act1, la, ls)
+			_parse_values(act2, ra, rs)
+
+			actions.append((act1, act2))
+
+		return Battle(player, enemy, actions)
 
 	def pillage(self):
 		"""搜刮资源"""
