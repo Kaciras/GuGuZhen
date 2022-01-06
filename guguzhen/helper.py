@@ -59,6 +59,8 @@ def item_hash(item: Item):
 			m.update(attr.type.encode())
 			m.update(attr.value.to_bytes(2, "big"))
 			m.update(attr.unit.encode())
+	elif item.attrs is None:
+		raise TypeError("装备对象不含属性，无法 Hash")
 	else:
 		m.update(item.level.to_bytes(2, "big"))
 		for attr in item.attrs:
@@ -111,6 +113,17 @@ def print_cards(api: GuGuZhen):
 
 
 def scan_browser(origin):
+	"""
+	扫描系统里安装的浏览器，从中找出指定主机的 Cookies。
+
+	【browser_cookies3 库中的已知问题】
+	1.未指定 ConfigParser 的编码，当 Firefox 配置目录路径有中文会报错。
+	2.Firefox 的 sqlite 开了预写日志，该库忘了把临时文件也复制过去，
+	  导致一些 Cookie 只有关闭浏览器后才能获取到。
+
+	:param origin: 主机名
+	:return: 对应站点的 CookieJar
+	"""
 	browsers = (Chrome, Chromium, Opera, Brave, Edge, Firefox)
 	found = {}
 
@@ -125,7 +138,7 @@ def scan_browser(origin):
 	if len(found) == 1:
 		return found.popitem()[1]
 	elif len(found) > 1:
-		msg = "在以下浏览器中找到了咕咕镇的 Cookies，复制哪个？"
+		msg = "在以下浏览器中找到了 Cookies，复制哪个？"
 		question = inquirer.List("name", msg, found)
 		answers = inquirer.prompt([question], raise_keyboard_interrupt=True)
 		return found[answers["name"]]
