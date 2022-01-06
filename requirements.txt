@@ -4,3 +4,7 @@ fire
 lxml
 inquirer
 browser_cookie3
+
+pytest
+pytest-httpx
+coverage
