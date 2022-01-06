@@ -42,11 +42,11 @@ class GiftApi:
 		:return: (总共, 基本数值) 二元组
 		"""
 		html = self.api.get_page("/fyg_gift.php")
-		el = html.xpath('//*[@id="giftinfo"]/div/h2')
-		total = _gp.search(el[0].text)
+		el = html.find('.//*[@id="giftinfo"]/div/h2')
+		total = _gp.search(el.text)
 
-		el = html.xpath('//*[@id="giftinfo"]/div/h4')
-		base = _gp.search(el[0].text)
+		el = html.find('.//*[@id="giftinfo"]/div/h4')
+		base = _gp.search(el.text)
 
 		return  {
 			"贝壳": int(total.group(1)),
@@ -67,7 +67,7 @@ class GiftApi:
 		html = etree.HTML(html)
 
 		cards, index = {}, 0
-		for i, el in enumerate(html.xpath("//button")):
+		for i, el in enumerate(html.iterfind(".//button")):
 			match = _gift_desc.match(el.text)
 			if match is None:
 				continue

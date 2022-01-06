@@ -28,7 +28,7 @@ class BeachApi:
 		html = self.api.fyg_read(ReadType.Beach)
 		html = etree.HTML(html)
 
-		buttons = html.xpath("//button")
+		buttons = html.iterfind(".//button")
 		return list(map(parse_item_button, buttons))
 
 	def clear(self):

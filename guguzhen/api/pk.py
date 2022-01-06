@@ -15,7 +15,7 @@ _base = re.compile(r"基准值:(\d+)，随机范围([0-9.]+)-([0-9.]+)倍")
 
 _lv_pattern = re.compile(r"Lv\.(\d+)(?:\((\d+)%\))?")
 
-_spaces = re.compile("\s+")
+_spaces = re.compile(r"\s+")
 
 _icon_class_map = {
 	"icon icon-bolt text-danger fyg_f14": "AD",
@@ -134,7 +134,7 @@ def _parse_fighter(equips, info):
 
 
 def _parse_values(action, icon_col, col2):
-	for icon in icon_col.xpath("p/i"):
+	for icon in icon_col.iterfind("p/i"):
 		key = _icon_class_map[icon.get("class")]
 		setattr(action, key, int(icon.text))
 
@@ -155,7 +155,7 @@ class PKApi:
 		"""获取段位、体力等基本信息"""
 		html = self.api.fyg_read(ReadType.PK)
 		html = etree.HTML(html)
-		spans = html.xpath("//span")
+		spans = html.findall(".//span")
 
 		return PKInfo(
 			PKRank[spans[0].text],
@@ -172,15 +172,15 @@ class PKApi:
 		:return: 战斗结果
 		"""
 		html = etree.HTML(self.api.fyg_v_intel(target))
-		rows = html.xpath("/html/body/div/div")
+		rows = html.findall("body/div/div")
 
-		fs = rows[0].xpath("div/div[1]/div[1]")
+		fs = rows[0].findall("div/div[1]/div[1]")
 		player = _parse_fighter(*fs[0].getchildren())
 		enemy = _parse_fighter(*reversed(fs[1].getchildren()))
 
 		actions = []
 		for i in range(1, len(rows) - 2, 3):
-			p1 = rows[i].xpath("div[1]/p")[0]
+			p1 = rows[i].find("div[1]/p")
 			attack = "bg-special" in p1.get("class")
 
 			s1 = p1.xpath("i/b/text()")
@@ -196,7 +196,7 @@ class PKApi:
 
 			actions.append((act1, act2))
 
-		win = "smile" in rows[-1].xpath("div[2]/div/i/@class")[0]
+		win = "smile" in rows[-1].find("div[2]/div/i").get("class")
 
 		return Battle(player, enemy, win, actions)
 

@@ -1,3 +1,4 @@
+import logging
 import re
 from enum import Enum
 from http.cookiejar import CookieJar
@@ -47,7 +48,7 @@ class ReadType(Enum):
 
 
 class VS(Enum):
-	Creeps = 1		# 打野
+	Creep = 1		# 打野
 	Player = 2		# 打人
 
 
@@ -137,6 +138,7 @@ class FYGClient:
 		match = _safeid_param.search(r.text)
 
 		if match is None:
+			logging.info("咕咕镇的 Cookies 已失效，尝试刷新，这可能要一点时间。")
 			r = self.client.get(self.forum + "/fyg_sjcdwj.php?go=play", timeout=15)
 			r.raise_for_status()
 			match = _safeid_param.search(r.text)

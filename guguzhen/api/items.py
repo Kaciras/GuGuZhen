@@ -56,10 +56,10 @@ class AmuletAttr:
 
 @dataclass(frozen=True, slots=True)
 class Amulet:
-	grade: Grade			  # 品质
-	name: str		 		  # 名字
-	enhancement: int		  # 强化次数
-	attrs: tuple[AmuletAttr]  # 属性列表
+	grade: Grade					# 品质
+	name: str		 				# 名字
+	enhancement: int				# 强化次数
+	attrs: tuple[AmuletAttr, ...]	# 属性列表
 
 
 @dataclass(frozen=True, slots=True)
@@ -111,7 +111,7 @@ def parse_item_button(button: etree.ElementBase):
 		return RandomCard
 
 	grade = grade_from_class(button)
-	entries = etree.HTML(button.get("data-content")).xpath("/html/body/p")
+	entries = etree.HTML(button.get("data-content")).findall("body/p")
 
 	# 护身符的 onclick 是两个参数。
 	match = _lvp.search(title)
@@ -159,11 +159,11 @@ class ItemApi:
 		html = self.api.fyg_read(ReadType.Equipments)
 		html = etree.HTML(html)
 
-		buttons = html.xpath("/html/body/div[1]/div/button")
+		buttons = html.findall("body/div[1]/div/button")
 		size = len(buttons)
 		backpacks = _parse_item_list(buttons)
 
-		buttons = html.xpath("/html/body/div[2]/div/button")
+		buttons = html.findall("body/div[2]/div/button")
 		repository = _parse_item_list(buttons)
 
 		return ItemsInfo(size, backpacks, repository)

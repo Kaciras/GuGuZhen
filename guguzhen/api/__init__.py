@@ -30,11 +30,11 @@ class GuGuZhen(FYGClient):
 
 	def get_version(self):
 		html = self.get_page("/fyg_ulog.php")
-		return html.xpath("/html/body/div/div[2]/div/div/div[2]/div[1]/h3")[0].text
+		return html.find("body/div/div[2]/div/div/div[2]/div[1]/h3").text
 
 	def get_user(self):
 		html = self.fyg_read(ReadType.User)
-		lines = etree.HTML(html).xpath("/html/body/p/span")
+		lines = etree.HTML(html).findall("body/p/span")
 
 		return UserInfo(
 			lines[0].text,
@@ -43,6 +43,10 @@ class GuGuZhen(FYGClient):
 			int(lines[3].text),
 			int(lines[4].text),
 		)
+
+	def drop_quagmire(self):
+		# cd2cf25
+		pass
 
 	@property
 	def pk(self):

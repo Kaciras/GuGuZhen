@@ -108,15 +108,15 @@ class Card:
 
 
 def _parse_card(div: etree.ElementBase):
-	lv, _, name = div.xpath("div[1]/div")
+	lv, _, name = div.iterfind("div[1]/div")
 
-	tl = div.xpath("div[2]")[0]
+	tl = div.find("div[2]")
 	attrs = etree.tostring(tl, encoding="unicode")
 	match = _card_attrs_re.search(attrs)
 
 	return Card(
 		int(div.get("onclick")[7:-1]),
-		int(lv.xpath("span")[0].text),
+		int(lv.find("span").text),
 		name.text.strip(),
 		int(match.group(1)),
 		int(match.group(2)),
@@ -135,17 +135,16 @@ class CharacterApi:
 		html = self.api.fyg_read(ReadType.Character)
 		html = etree.HTML(html)
 
-		buttons = html.xpath("//div[@class='fyg_tc']/button")
+		buttons = html.iterfind(".//div[@class='fyg_tc']/button")
 		return EquipConfig(*map(parse_item_button, buttons))
 
 	def get_talent(self):
 		html = self.api.fyg_read(ReadType.Talent)
 		html = etree.HTML(html)
 
-		h1 = html.xpath("/html/body/h1")[0]
-		halo = float(h1.text[:-1])
+		halo = float(html.find("body/h1").text[:-1])
 
-		script = html.xpath("/html/body/script")[0].text
+		script = html.find("body/script").text
 		ids = _highlight_code.findall(script)
 		talent = map(lambda x: Talent(int(x)), ids)
 
@@ -164,7 +163,7 @@ class CharacterApi:
 		html = self.api.fyg_read(ReadType.CardList)
 		html = etree.HTML(html)
 
-		return tuple(map(_parse_card, html.xpath("/html/body/div")))
+		return tuple(map(_parse_card, html.iterfind("body/div")))
 
 	def switch_card(self, card):
 		if isinstance(card, Card):
