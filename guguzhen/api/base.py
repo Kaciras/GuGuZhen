@@ -4,7 +4,6 @@ from enum import Enum
 from http.cookiejar import CookieJar
 
 from httpx import Client
-from lxml import etree
 
 _FORUM_ORIGIN = "https://bbs.9shenmi.com"
 
@@ -138,7 +137,7 @@ class FYGClient:
 		match = _safeid_param.search(r.text)
 
 		if match is None:
-			logging.info("咕咕镇的 Cookies 已失效，尝试刷新，这可能要一点时间。")
+			logging.info("当前 Cookies 无法登录，尝试刷新，这可能要一点时间。")
 			r = self.client.get(self.forum + "/fyg_sjcdwj.php?go=play", timeout=15)
 			r.raise_for_status()
 			match = _safeid_param.search(r.text)
@@ -151,7 +150,7 @@ class FYGClient:
 	def get_page(self, path):
 		r = self.client.get(path)
 		r.raise_for_status()
-		return etree.HTML(r.text)
+		return r.text
 
 	def fyg_read(self, type_, **kwargs):
 		kwargs["f"] = str(type_.value)

@@ -15,9 +15,11 @@ _gxp = re.compile(r"消耗 <b>(\d+)</b> 星沙", re.MULTILINE)
 GiftType = Literal["贝壳", "星沙", "装备", "卡片", "光环"]
 
 
-@dataclass(eq=False, slots=True)
+@dataclass(frozen=True, slots=True)
 class Gift:
-	type: GiftType		# 礼物的类型
+	"""表示一个翻开的礼物"""
+
+	type: GiftType		# 类型
 	base: float			# 基本值
 	ratio: float		# 倍率
 
@@ -42,6 +44,8 @@ class GiftApi:
 		:return: (总共, 基本数值) 二元组
 		"""
 		html = self.api.get_page("/fyg_gift.php")
+		html = etree.HTML(html)
+
 		el = html.find('.//*[@id="giftinfo"]/div/h2')
 		total = _gp.search(el.text)
 
@@ -63,6 +67,9 @@ class GiftApi:
 		}
 
 	def get_gifts(self):
+		"""
+		获取所有已打开的礼物，返回 dict[编号，礼物信息] 字典
+		"""
 		html = self.api.fyg_read(ReadType.Gifts)
 		html = etree.HTML(html)
 
@@ -80,6 +87,17 @@ class GiftApi:
 		return cards
 
 	def open(self, index, use_sand=False):
+		"""
+		翻开一个礼物，如果免费次数用完且不使用星沙则抛异常。
+
+		编号的排列为先竖后横：
+			1	4	7	10
+			2	5	8	11
+			3	6	9	12
+
+		:param index: 礼物的编号，从 1 开始
+		:param use_sand: 是否使用星沙
+		"""
 		form = {
 			"id": index,
 		}

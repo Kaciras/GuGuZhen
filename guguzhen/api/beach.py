@@ -1,10 +1,10 @@
 import re
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from lxml import etree
 
 from .base import FYGClient, ReadType, ClickType, LimitReachedError, FygAPIError
-from .items import Item, parse_item_button
+from .items import parse_item_button
 
 _time_re = re.compile(r"还有 (\d+) 分钟")
 
@@ -18,10 +18,10 @@ class BeachApi:
 		self.api = api
 
 	def get_next_time(self):
-		"""获取下次装备被冲上沙滩的时间，返回的是日期"""
-		text = self.api.get_page("fyg_beach.php").text
+		"""获取下次装备被冲上沙滩的时间"""
+		text = self.api.get_page("fyg_beach.php")
 		m = _time_re.search(text).group(1)
-		return datetime.now() + timedelta(minutes=int(m))
+		return timedelta(minutes=int(m))
 
 	def get_items(self):
 		"""查看沙滩"""
@@ -39,22 +39,25 @@ class BeachApi:
 		"""强制刷新，立即获得下一批随机装备"""
 		self.api.fyg_click(ClickType.RefreshBeach)
 
-	def pick(self, item):
-		"""捡起装备"""
-		if isinstance(item, Item):
-			item = item.id
-		text = self.api.fyg_click(ClickType.PickUp, id=item)
+	def pick(self, bc_id: int):
+		"""
+		捡起装备，装备必须在沙滩上。
+
+		:param bc_id 装备在沙滩上的 ID
+		"""
+		text = self.api.fyg_click(ClickType.PickUp, id=bc_id)
 
 		if text.startswith("背包已满"):
 			raise LimitReachedError("背包已满")
 		if not text.endswith("ok"):
 			raise FygAPIError("拾取失败：" + text)
 
-	def throw(self, item):
-		"""丢弃到沙滩"""
-		if isinstance(item, Item):
-			item = item.id
-		text = self.api.fyg_click(ClickType.Throw, id=item)
+	def throw(self, bp_id: int):
+		"""
+		丢弃到沙滩，装备必须在背包中。
 
+		:param bp_id 装备在背包中的 ID
+		"""
+		text = self.api.fyg_click(ClickType.Throw, id=bp_id)
 		if not text.startswith("已将装备丢弃到沙滩"):
 			raise FygAPIError("丢弃失败：" + text)

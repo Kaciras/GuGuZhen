@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Dict, Optional
+from typing import Dict, Optional, Sequence
 
 from lxml import etree
 
@@ -13,7 +13,7 @@ _id_with_label = re.compile(r"(\d+)','Lv.\d+ ([^']+)")
 
 _color_class = re.compile(r"fyg_colpz0(\d)bg")
 
-_amulet_content = re.compile(r"\+(\d+) ([点%])")
+_amulet_content = re.compile(r"\+(\d+)\s([点%])")
 
 _fc_re = re.compile(r"获得(\d+)水果核")
 
@@ -36,9 +36,9 @@ class Grade(IntEnum):
 
 @dataclass(frozen=True, slots=True)
 class EquipAttr:
-	type: str   	# 属性名
-	ratio: float  	# 倍率
-	value: int  	# 属性值
+	type: str   		# 属性名
+	ratio: float  		# 倍率
+	value: int  		# 属性值
 
 	def __str__(self):
 		return f"[{self.ratio:.0%} {self.type} {self.value}]"
@@ -46,9 +46,9 @@ class EquipAttr:
 
 @dataclass(frozen=True, slots=True)
 class AmuletAttr:
-	type: str		# 增加的属性
-	value: int		# 增加量（若是百分比需要除以 100）
-	unit: str		# 单位，"点" 或 "%"
+	type: str			# 增加的属性
+	value: int			# 增加量（若是百分比需要除以 100）
+	unit: str			# 单位，"点" 或 "%"
 
 	def __str__(self):
 		return f"[{self.type} +{self.value}{self.unit}]"
@@ -59,19 +59,19 @@ class Amulet:
 	grade: Grade					# 品质
 	name: str		 				# 名字
 	enhancement: int				# 强化次数
-	attrs: tuple[AmuletAttr, ...]	# 属性列表
+	attrs: Sequence[AmuletAttr]		# 属性列表
 
 
 @dataclass(frozen=True, slots=True)
 class Equipment:
 	"""装备物品，如果是 PK 记录则后两个属性为 None"""
 
-	grade: Grade						# 装备品质
-	name: str							# 物品名
-	level: int							# 装备等级
+	grade: Grade							# 装备品质
+	name: str								# 物品名
+	level: int								# 装备等级
 
-	attrs: Optional[tuple[EquipAttr]]	# 属性列表
-	mystery: Optional[str]				# 神秘属性文本
+	attrs: Optional[Sequence[EquipAttr]]	# 属性列表
+	mystery: Optional[str]					# 神秘属性文本
 
 
 # 背包和仓库里的物品，可以是护身符或装备
@@ -80,9 +80,9 @@ Item = Amulet | Equipment
 
 @dataclass(eq=False)
 class ItemsInfo:
-	size: int					 # 背包格子数
-	backpacks: Dict[int, Item]	 # 背包物品
-	repository: Dict[int, Item]  # 仓库物品
+	size: int					 	# 背包格子数
+	backpacks: Dict[int, Item]	 	# 背包物品
+	repository: Dict[int, Item]  	# 仓库物品
 
 
 def _parse_item_list(buttons):

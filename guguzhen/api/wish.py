@@ -44,7 +44,7 @@ class WishApi:
 		)
 
 	def wish(self):
-		"""许愿！"""
+		"""许愿一次"""
 		self.api.fyg_click(ClickType.Wish)
 
 	def shuffle(self):

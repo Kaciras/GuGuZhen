@@ -84,13 +84,13 @@ class EquipConfig:
 
 @dataclass(frozen=True, slots=True)
 class Card:
-	id: int			# 卡片 ID
-	level: int		# 等级
-	role: Role		# 职业
-	lv_max: int		# 最大等级
-	skills: int		# 技能位
-	quality: float	# 品质
-	in_use: bool 	# 使用中？
+	id: int				# 卡片 ID
+	level: int			# 等级
+	role: Role			# 职业
+	lv_max: int			# 最大等级
+	skills: int			# 技能位
+	quality: float		# 品质
+	in_use: bool 		# 使用中？
 
 	def __str__(self):
 		parts = [
@@ -139,13 +139,14 @@ class CharacterApi:
 		return EquipConfig(*map(parse_item_button, buttons))
 
 	def get_talent(self):
+		"""查询我的光环天赋"""
 		html = self.api.fyg_read(ReadType.Talent)
 		html = etree.HTML(html)
 
 		halo = float(html.find("body/h1").text[:-1])
 
 		script = html.find("body/script").text
-		ids = _highlight_code.findall(script)
+		ids = _highlight_code.finditer(script)
 		talent = map(lambda x: Talent(int(x)), ids)
 
 		return TalentPanel(halo, tuple(talent))
@@ -165,20 +166,21 @@ class CharacterApi:
 
 		return tuple(map(_parse_card, html.iterfind("body/div")))
 
-	def switch_card(self, card):
+	def switch_card(self, card: Card | int):
+		"""装备指定的卡片"""
 		if isinstance(card, Card):
 			card = card.id
 		text = self.api.fyg_click(ClickType.SwitchCard, id=card)
 		if text != "ok":
 			raise FygAPIError("换卡失败：" + text)
 
-	def rebuild(self, card):
+	def rebuild(self, card: Card | int):
 		"""重置卡片的加点"""
 		if isinstance(card, Card):
 			card = card.id
 		text = self.api.fyg_click(ClickType.Rebuild, id=card)
 
-	def delete_card(self, card):
+	def delete_card(self, card: Card | int):
 		if isinstance(card, Card):
 			card = card.id
 		text = self.api.fyg_click(ClickType.SwitchCard, id=card)
