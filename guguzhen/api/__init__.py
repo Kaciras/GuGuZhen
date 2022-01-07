@@ -9,6 +9,8 @@ from .items import *
 from .pk import *
 from .wish import *
 
+_safeid_param = re.compile(r"&sf=([0-9a-z]+)", re.MULTILINE)
+
 
 @dataclass(eq=False)
 class UserInfo:
@@ -29,7 +31,8 @@ class GuGuZhen(FYGClient):
 		time.sleep(random.uniform(1, 4))
 
 	def get_version(self):
-		html = self.get_page("/fyg_ulog.php")
+		"""查询当前咕咕镇版本的更新日期"""
+		html = etree.HTML(self.get_page("/fyg_ulog.php"))
 		return html.find("body/div/div[2]/div/div/div[2]/div[1]/h3").text
 
 	def get_user(self):
@@ -44,9 +47,30 @@ class GuGuZhen(FYGClient):
 			int(lines[4].text),
 		)
 
-	def drop_quagmire(self):
-		# cd2cf25
-		pass
+	def drop_quagmire(self, value: int):
+		"""
+		主站右边的泥潭，可以把自己不需要的 KFB 和贡献扔掉。
+
+		value 参数可以是以下值：
+			5	- 扔掉 5万KFB
+			50	- 扔掉 50万KFB
+			1	- 扔掉 1贡献
+			10	- 扔掉 10万KFB
+			600	- 扔掉 50万KFB + 10贡献
+		"""
+		url = self.forum + "/kf_drop.php"
+		html = etree.HTML(self.get_page(url))
+
+		href = html.find(".//table/tr[2]/td/a[1]").get("href")
+		sf = _safeid_param.search(href).group(1)
+
+		html = self.get_page(f"{url}?r={value}&sf={sf}")
+		html = etree.HTML(html)
+
+		prev = html.find(".//div[@id='alldiv']/div[3]/div[2]/div/br[3]")
+		span = prev.getnext()
+		if (span is None) or (span.tag != "span"):
+			raise FygAPIError(prev.tail)
 
 	@property
 	def pk(self):
