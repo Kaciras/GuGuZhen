@@ -1,6 +1,8 @@
+import math
 from base64 import urlsafe_b64encode
 from hashlib import sha256
 from struct import pack
+from typing import AbstractSet
 
 import inquirer
 from browser_cookie3 import *
@@ -16,6 +18,26 @@ _color_map = (
 	Fore.LIGHTYELLOW_EX,
 	Fore.LIGHTRED_EX,
 )
+
+
+class UniversalSet(AbstractSet):
+	"""
+	表示全集，包含所有，该类仅用于判断是否存在，不支持获取其中的元素。
+
+	【与字面量集合的区别】
+	以 Role 为例，字面量随着服务端版本更新可能会改变，比如出了新的角色，
+	如果用 frozenset(get_args(Role)) 无法包含新出的，必须等待程序更新；
+	而全集则没有这个问题，在使用上是有差别的。
+	"""
+
+	def __len__(self):
+		return math.inf
+
+	def __iter__(self):
+		raise NotImplementedError()
+
+	def __contains__(self, _):
+		return True
 
 
 def _full_print(items):
