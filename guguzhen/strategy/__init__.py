@@ -1,9 +1,9 @@
-from .beach import *
-from .character import *
-from .gift import *
-from .pk import *
-from .wish import *
-from ..api.base import ClientVersionError
+from .beach import PickBeach, EC, CardCleaner
+from .character import CharacterPreset
+from .gift import GetGift
+from .pk import PK
+from .wish import Wish
+from ..api import ClientVersionError, GuGuZhen
 
 
 class CheckVersion:
