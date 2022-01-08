@@ -1,7 +1,14 @@
 import logging
+from enum import Enum
 
 from guguzhen.api import GuGuZhen, VS, PKInfo
 from guguzhen.strategy import CharacterPreset
+
+
+class _Mode(Enum):
+	Default = 0		# 野怪强度小于 5 时打野，大于 5 时打人，但进度小于 92 时也会打人。
+	CreepFirst = 1	# 跟 Default 相似，但即便进度小于 92 也不会打人。
+	PVPOnly = 2		# 只打人不打野。
 
 
 class PK:
@@ -9,9 +16,16 @@ class PK:
 	自动玩争夺战场，该策略详细的说明见 play.py 中的注释。
 	"""
 
-	def __init__(self, pve: CharacterPreset, pvp: CharacterPreset):
+	mode = _Mode
+
+	def __init__(
+			self,
+			pve: CharacterPreset,
+			pvp: CharacterPreset,
+			mode=_Mode.Default):
 		self.pve = pve
 		self.pvp = pvp
+		self.mode = mode
 
 	def run(self, api: GuGuZhen):
 		state = api.pk.get_info()
@@ -24,10 +38,18 @@ class PK:
 		logging.info("争夺战场结束")
 
 	def _start(self, state: PKInfo, _):
-		if state.strengthen < 5:
-			return self._pillage_creep
-		else:
+		if self.mode == _Mode.PVPOnly:
 			return self._pillage_player
+		if self.mode == _Mode.CreepFirst:
+			if state.strengthen < 5:
+				return self._pillage_creep
+			else:
+				return self._pillage_player
+		else:
+			if state.strengthen < 5 and state.progress >= 92:
+				return self._pillage_creep
+			else:
+				return self._pillage_player
 
 	def _pillage_creep(self, state: PKInfo, api: GuGuZhen):
 		if state.progress <= 95:
