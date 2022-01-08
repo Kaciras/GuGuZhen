@@ -41,4 +41,5 @@ def test_open_limited(api, fyg_server):
 
 	with pytest.raises(LimitReachedError):
 		api.gift.open(4)
-		fyg_server.verify_click(c="8", id="4")
+
+	fyg_server.verify_click(c="8", id="4")

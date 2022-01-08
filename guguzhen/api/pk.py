@@ -45,8 +45,10 @@ class PKRank(IntEnum):
 	SSS = 12
 
 
-@dataclass(eq=False, slots=True)
+@dataclass(slots=True)
 class PKInfo:
+	"""争夺战场里的段位、体力等等信息"""
+
 	rank: PKRank	 		# 当前所在段位
 	progress: int	 		# 段位进度
 	power: int		 		# 今日体力
@@ -65,6 +67,8 @@ class Trophy:
 
 @dataclass(eq=False, slots=True)
 class Player:
+	"""战斗中的玩家"""
+
 	name: str					# 名字
 	role: Role					# 职业（卡片）
 	leval: int					# 等级
@@ -73,6 +77,8 @@ class Player:
 
 @dataclass(slots=True)
 class Creep:
+	"""战斗中的野怪"""
+
 	type: CreepType				# 名字
 	leval: int					# 等级
 	strengthen: float			# 强度
@@ -97,14 +103,14 @@ class Action:
 	ES_health: int = None		# 护盾回复
 
 
-# 表示一次交手，左边是自己右边是对方
+# 表示一次交手，左边是自己右边是对方。
 Round = tuple[Action, Action]
 
 
 @dataclass(eq=False, slots=True)
 class Battle:
 	player: Player					# 自己
-	enemy: Player					# 敌人
+	enemy: Player | Creep			# 敌人
 	is_win: bool					# 己方胜利
 	actions: Sequence[Round]		# 过程
 

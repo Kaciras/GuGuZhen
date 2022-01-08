@@ -33,8 +33,19 @@ class FYGServerMock:
 	def __init__(self, httpx_mock: HTTPXMock):
 		self.httpx_mock = httpx_mock
 
-	def mock_res(self, filename: PathLike):
-		html = _fixtures.joinpath(filename).read_text("utf8")
+	def mock_res(
+			self,
+			filename: PathLike = None,
+			enc="utf8",
+			content: str = None
+	):
+		if filename:
+			html = _fixtures.joinpath(filename).read_text(enc)
+		elif content:
+			html = content
+		else:
+			raise TypeError("至少得有一个内容参数")
+
 		self.httpx_mock.add_response(html=html)
 
 	def verify(self, path, method="GET", **kwargs):

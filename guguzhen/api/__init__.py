@@ -28,7 +28,7 @@ class GuGuZhen(FYGClient):
 		"""
 		等待几秒，避免请求太快增加服务器压力，毕竟本程序是爬虫不是 DOS 攻击。
 		"""
-		time.sleep(random.uniform(1, 4))
+		time.sleep(random.uniform(0.5, 3))
 
 	def get_version(self):
 		"""查询当前咕咕镇版本的更新日期"""

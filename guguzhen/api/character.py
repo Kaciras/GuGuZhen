@@ -146,18 +146,20 @@ class CharacterApi:
 		halo = float(html.find("body/h1").text[:-1])
 
 		script = html.find("body/script").text
-		ids = _highlight_code.finditer(script)
+		ids = _highlight_code.findall(script)
 		talent = map(lambda x: Talent(int(x)), ids)
 
 		return TalentPanel(halo, tuple(talent))
 
 	def set_talent(self, values: Iterable[Talent]):
-		arr = ",".join(map(lambda x: x.value, values))
+		"""保存光环技能"""
+		arr = ",".join(map(lambda x: str(x.value), values))
 		text = self.api.fyg_click(ClickType.SetTalent, arr=arr)
-		# 点数不足：start_with 你当前装备的卡片
-		# 错误的天赋 ID 也返回 ok……
+
+		# 错误的天赋 ID 也返回 ok
+		# 列表有重复 ID 也返回 ok
 		if text != "ok":
-			raise FygAPIError("光环天赋保存失败：" + text)
+			raise FygAPIError("光环技能保存失败：" + text)
 
 	def get_cards(self):
 		"""角色卡片列表"""

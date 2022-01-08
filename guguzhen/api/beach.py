@@ -9,6 +9,20 @@ from .items import parse_item_button
 _time_re = re.compile(r"还有 (\d+) 分钟")
 
 
+def _parse_drifting_item(buttons):
+	id_and_item = []
+
+	for button in buttons:
+		onclick = button.get("onclick")
+		if not onclick:
+			continue
+		item = parse_item_button(button)
+		id_ = int(onclick[7:-1])
+		id_and_item.append((id_, item))
+
+	return id_and_item
+
+
 class BeachApi:
 	"""
 	注意：沙滩的物品虽然也是用的 character.Item 类，但与物品栏中的物品 id 不同。
@@ -29,7 +43,7 @@ class BeachApi:
 		html = etree.HTML(html)
 
 		buttons = html.iterfind(".//button")
-		return list(map(parse_item_button, buttons))
+		return _parse_drifting_item(buttons)
 
 	def clear(self):
 		"""批量清理沙滩（清除史诗以下装备）"""
