@@ -14,28 +14,30 @@ def test_hash_incomplete_equip():
 
 
 def test_amulet_hash():
-	attr = AmuletAttr("智力", 1, "%")
-	a = Amulet(Grade.cyan, "稀有苹果护身符", 1, (attr,))
-	b = Amulet(Grade.cyan, "稀有苹果护身符", 1, (attr,))
+	p1 = AmuletAttr("智力", 1)
+	p2 = AmuletAttr("速度", 0.01)
+
+	a = Amulet(Grade.cyan, "稀有苹果护身符", 1, (p1, p2))
+	b = Amulet(Grade.cyan, "稀有苹果护身符", 1, (p1, p2))
 	c = Amulet(Grade.cyan, "稀有苹果护身符", 1, ())
 
 	h1, h2, h3 = item_hash(a), item_hash(b), item_hash(c)
 
 	assert h1 != h3 and a != c
 	assert a == b
-	assert h1 == h2 == "2vgHfHwP"
+	assert h1 == h2 == "gQMEexkj"
 
 
 def test_equip_hash():
-	p1 = EquipAttr("物理攻击", 1.23, 45)
+	p1 = EquipAttr("物理攻击", 1.23, 0.45)
 	p2 = EquipAttr("附加理伤", 0.97, 1235)
 
-	a = Equipment(Grade.cyan, "幽梦匕首", 138, (p1, p2), None)
-	b = Equipment(Grade.cyan, "幽梦匕首", 138, (p1, p2), None)
-	c = Equipment(Grade.cyan, "幽梦匕首", 138, (p1, p2), "foobar")
+	a = Equipment(Grade.black, "幽梦匕首", 138, (p1, p2), None)
+	b = Equipment(Grade.black, "幽梦匕首", 138, (p1, p2), None)
+	c = Equipment(Grade.black, "幽梦匕首", 138, (p1, p2), "foobar")
 
 	h1, h2, h3 = item_hash(a), item_hash(b), item_hash(c)
 
 	assert h1 != h3 and a != c
 	assert a == b
-	assert h1 == h2 == "Jyd_qWEh"
+	assert h1 == h2 == "EOrGZ-wJ"

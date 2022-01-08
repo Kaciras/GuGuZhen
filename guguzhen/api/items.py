@@ -36,26 +36,37 @@ class Grade(IntEnum):
 
 @dataclass(frozen=True, slots=True)
 class EquipAttr:
-	type: str   		# 属性名
-	ratio: float  		# 倍率
-	value: int  		# 属性值
+	"""装备的一条属性"""
+
+	type: str   			# 属性名
+	ratio: float  			# 倍率
+	value: int | float 		# 属性值，若是百分比则为 float
 
 	def __str__(self):
-		return f"[{self.ratio:.0%} {self.type} {self.value}]"
+		if isinstance(self.value, int):
+			return f"[{self.ratio:.0%} {self.type} {self.value}]"
+		else:
+			return f"[{self.ratio:.0%} {self.type} {self.value:.0%}]"
 
 
 @dataclass(frozen=True, slots=True)
 class AmuletAttr:
-	type: str			# 增加的属性
-	value: int			# 增加量（若是百分比需要除以 100）
-	unit: str			# 单位，"点" 或 "%"
+	"""护身符的一条属性"""
+
+	type: str				# 增加的属性
+	value: int | float		# 增加量，若是百分比则为 float
 
 	def __str__(self):
-		return f"[{self.type} +{self.value}{self.unit}]"
+		if isinstance(self.value, int):
+			return f"[{self.type} +{self.value}点]"
+		else:
+			return f"[{self.type} +{self.value:.0%}]"
 
 
 @dataclass(frozen=True, slots=True)
 class Amulet:
+	"""护身符物品"""
+
 	grade: Grade					# 品质
 	name: str		 				# 名字
 	enhancement: int				# 强化次数
@@ -132,7 +143,12 @@ def parse_item_button(button: etree.ElementBase):
 def _parse_amulet_attr(paragraph: etree.ElementBase):
 	span = paragraph.getchildren()[0]
 	v, u = _amulet_content.match(span.text).groups()
-	return AmuletAttr(paragraph.text, int(v), u)
+
+	value = int(v)
+	if u == "%":
+		value /= 100
+
+	return AmuletAttr(paragraph.text, value)
 
 
 def _parse_equip_attr(paragraph: etree.ElementBase):
@@ -141,7 +157,12 @@ def _parse_equip_attr(paragraph: etree.ElementBase):
 	ratio = int(label.text[:-1]) / 100
 	type_, value = text.text.split(" ")
 
-	return EquipAttr(type_, ratio, int(value[:-1]))
+	if value[-1] == "%":
+		value = int(value[:-1]) / 100
+	else:
+		value = int(value)
+
+	return EquipAttr(type_, ratio, value)
 
 
 # xxx('<id>','Lv.1 稀有苹果护身符')、或者 xxx(<id>)

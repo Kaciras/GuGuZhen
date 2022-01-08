@@ -77,18 +77,28 @@ def item_hash(item: Item):
 
 	if isinstance(item, Amulet):
 		m.update(item.enhancement.to_bytes(1, "big"))
+
 		for attr in item.attrs:
 			m.update(attr.type.encode())
-			m.update(attr.value.to_bytes(2, "big"))
-			m.update(attr.unit.encode())
+
+			if isinstance(attr.value, int):
+				m.update(attr.value.to_bytes(2, "big"))
+			else:
+				m.update(pack(">f", attr.value))
 	elif item.attrs is None:
 		raise TypeError("装备对象不含属性，无法 Hash")
 	else:
 		m.update(item.level.to_bytes(2, "big"))
+
 		for attr in item.attrs:
 			m.update(attr.type.encode())
 			m.update(pack(">f", attr.ratio))
-			m.update(attr.value.to_bytes(2, "big"))
+
+			if isinstance(attr.value, int):
+				m.update(attr.value.to_bytes(2, "big"))
+			else:
+				m.update(pack(">f", attr.value))
+
 		if item.mystery:
 			m.update(item.mystery.encode())
 
