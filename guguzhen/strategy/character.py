@@ -33,6 +33,7 @@ class CharacterPreset:
 		s = (config.weapon, config.bracelet, config.armor, config.accessory)
 		for i, e in enumerate(self.equipment):
 			if item_hash(s[i]) != e:
+				api.rest()
 				ctx.put_on(e)
 
 		out_list, reaming = [], 0
@@ -47,11 +48,16 @@ class CharacterPreset:
 				out_list.append(h)
 
 		for id_ in chain.from_iterable(ctx.bp_map.values()):
+			api.rest()
 			api.items.put_in(id_)
+			print(f"{id_} [背包] -> [仓库]") # 4416100
 
 		free = ctx.items.size - reaming
 		for h in out_list[:free]:
-			api.items.put_out(ctx.rp_map[h].pop())
+			api.rest()
+			id_ = ctx.rp_map[h].pop()
+			api.items.put_out(id_)
+			print(f"{id_} [仓库] -> [背包]")
 
 
 class ItemSwitchContext:
@@ -79,18 +85,21 @@ class ItemSwitchContext:
 			self.rp_map[item_hash(e)].append(id_)
 
 	def r2b(self, hash_):
-		# 如果背包满了就随便移出去一个
+		"""
+
+		:param hash_:
+		:return:
+		"""
 		bp = self.items.backpacks
 		if len(bp) >= self.items.size:
 			v = bp.popitem()[0]
 			self.api.items.put_in(v)
 
-		# 将物品从仓库移到背包
 		id_ = self.rp_map[hash_][0]
+		self.api.rest()
 		self.api.items.put_out(id_)
 		self.refresh()
 
-		# 这回肯定在背包里了
 		return self.bp_map[hash_][0]
 
 	def put_on(self, hash_):

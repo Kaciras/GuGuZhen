@@ -1,6 +1,6 @@
 from .beach import PickBeach, EC, CardCleaner
 from .character import CharacterPreset
-from .gift import GetGift
+from .gift import GetGift, GiftSandRule
 from .pk import PK
 from .wish import Wish
 from ..api import ClientVersionError, GuGuZhen

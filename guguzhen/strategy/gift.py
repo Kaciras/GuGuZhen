@@ -67,6 +67,7 @@ class _GiftContext:
 		return 2 + (2 ** len(self.opened))
 
 	def open(self, index, use_sand):
+		self.api.rest()
 		self.api.gift.open(index, use_sand)
 		self._refresh()
 

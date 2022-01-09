@@ -6,6 +6,11 @@ from guguzhen.api import GuGuZhen, Card, RandomCard, Role
 from guguzhen.helper import UniversalSet
 
 
+class _NOPCleaner:
+
+	def clean(self, api, cards, count): pass
+
+
 class CardCleaner:
 	"""清理卡片"""
 
@@ -78,7 +83,7 @@ class EC:
 
 class PickBeach:
 
-	def __init__(self, card_cleaner: CardCleaner):
+	def __init__(self, card_cleaner: CardCleaner = _NOPCleaner()):
 		self.card_cleaner = card_cleaner
 
 	def run(self, api: GuGuZhen):

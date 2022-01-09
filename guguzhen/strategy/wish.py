@@ -13,8 +13,8 @@ class Wish:
 		count = self.times > info.point
 
 		while self.times > info.point:
+			api.rest()
 			api.wishing.wish()
 			info = api.wishing.get_info()
-			api.rest()
 
 		logging.info(f"许愿了 {count} 次")
