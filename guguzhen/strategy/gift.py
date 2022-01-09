@@ -1,7 +1,7 @@
 import logging
 from copy import copy
 from dataclasses import dataclass
-from typing import List
+from typing import Sequence
 
 from ..api import GuGuZhen
 
@@ -17,7 +17,7 @@ class GiftSandRule:
 
 class GetGift:
 
-	def __init__(self, sand_usage: List[GiftSandRule] = ()):
+	def __init__(self, sand_usage: Sequence[GiftSandRule] = ()):
 		self.sand_usage = sand_usage
 
 	def run(self, api: GuGuZhen):
@@ -64,7 +64,9 @@ class _GiftContext:
 
 	@property
 	def cost(self):
-		return 2 + (2 ** len(self.opened))
+		"""打开下一个礼物需要的星沙数量"""
+		n = len(self.opened)
+		return 0 if n == 0 else 2 + (2 ** n)
 
 	def open(self, index, use_sand):
 		self.api.rest()

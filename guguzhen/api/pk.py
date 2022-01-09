@@ -113,6 +113,8 @@ Round = tuple[Action, Action]
 
 @dataclass(eq=False, slots=True)
 class Battle:
+	"""表示一场战斗"""
+
 	player: Player				# 自己
 	enemy: Player | Creep		# 敌人
 	is_win: bool				# 己方胜利

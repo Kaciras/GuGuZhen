@@ -17,7 +17,7 @@ from .items import (
 	ItemApi, ItemsInfo, Item, Grade, RandomCard
 )
 from .pk import VS, PKInfo, PKApi, Player, Creep, CreepType, Trophy, PKRank, Action, Battle
-from .wish import WishApi, WishInfo
+from .wish import WishApi, WishInfo, WishBuffers
 
 _safeid_param = re.compile(r"&sf=([0-9a-z]+)", re.MULTILINE)
 
@@ -38,7 +38,7 @@ class GuGuZhen(FYGClient):
 		"""
 		等待几秒，避免请求太快增加服务器压力，毕竟本程序是爬虫不是 DOS 攻击。
 		"""
-		time.sleep(random.uniform(0.5, 3))
+		time.sleep(random.uniform(0.8, 3))
 
 	def get_version(self):
 		"""查询当前咕咕镇版本的更新日期"""

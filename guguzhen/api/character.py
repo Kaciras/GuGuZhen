@@ -183,6 +183,7 @@ class CharacterApi:
 		text = self.api.fyg_click(ClickType.Rebuild, id=card)
 
 	def delete_card(self, card: Card | int):
+		"""删除指定的卡片"""
 		if isinstance(card, Card):
 			card = card.id
 		text = self.api.fyg_click(ClickType.SwitchCard, id=card)

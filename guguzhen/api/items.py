@@ -91,7 +91,7 @@ Item = Amulet | Equipment
 
 @dataclass(eq=False)
 class ItemsInfo:
-	size: int					 	# 背包格子数
+	size: int					 	# 当前背包容量（可能超出限制）
 	backpacks: Dict[int, Item]	 	# 背包物品
 	repository: Dict[int, Item]  	# 仓库物品
 
