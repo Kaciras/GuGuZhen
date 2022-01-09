@@ -42,7 +42,7 @@ def test_vs_player(api, fyg_server):
 
 	left, _ = battle.actions[9]
 	assert left.is_attack == True
-	assert left.state == ["暴击", "飓风之力", "星芒 15", "点到为止"]
+	assert left.state == (("暴击", 0), ("飓风之力", 0), ("星芒", 15), ("点到为止", 0))
 	assert left.HP == 1559
 	assert left.ES == 64194
 	assert left.AD == 108

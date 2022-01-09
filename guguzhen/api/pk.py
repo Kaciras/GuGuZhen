@@ -84,10 +84,14 @@ class Creep:
 	strengthen: float			# 强度
 
 
+# 元组的两个元素是名字和数量，比如 星芒 15! = ("星芒", 15)，没有数量的为 0
+_StateList = Sequence[tuple[str, int]]
+
+
 @dataclass(eq=False, slots=True)
 class Action:
 	is_attack: bool				# 是攻击方？
-	state: Sequence[str]		# 技能和状态
+	state: _StateList			# 技能和状态
 
 	HP: int = 0					# 血量
 	ES: int = 0					# 护盾
@@ -109,10 +113,10 @@ Round = tuple[Action, Action]
 
 @dataclass(eq=False, slots=True)
 class Battle:
-	player: Player					# 自己
-	enemy: Player | Creep			# 敌人
-	is_win: bool					# 己方胜利
-	actions: Sequence[Round]		# 过程
+	player: Player				# 自己
+	enemy: Player | Creep		# 敌人
+	is_win: bool				# 己方胜利
+	actions: Sequence[Round]	# 过程
 
 
 def _parse_fighter(equips, info):
@@ -127,7 +131,7 @@ def _parse_fighter(equips, info):
 		level, strengthen = match.groups()
 		return Creep(h3.text, int(level), int(strengthen) / 100)
 
-	# TODO: 如果装备不齐？懒得新建小号测试，等遇到了再说
+	# TODO: 如果装备不齐？最近不能注册新号，没法测。
 	e = []
 	for button in equips.iterchildren():
 		grade = grade_from_class(button)
@@ -148,8 +152,11 @@ def _parse_values(action, icon_col, col2):
 	action.ES, action.HP = int(es), int(hp)
 
 
-def _strip_exclamation(values):
-	return [x.rstrip("!") for x in values]
+def _parse_state(values):
+	for x in values:
+		x = x.rstrip("!").split(" ")
+		c = x[1] if len(x) > 1 else 0
+		yield x[0], int(c)
 
 
 class PKApi:
@@ -192,8 +199,8 @@ class PKApi:
 			s1 = p1.xpath("i/b/text()")
 			s2 = rows[i].xpath("div[2]/p/i/b/text()")
 
-			act1 = Action(attack, _strip_exclamation(s1))
-			act2 = Action(not attack, _strip_exclamation(s2))
+			act1 = Action(attack, tuple(_parse_state(s1)))
+			act2 = Action(not attack, tuple(_parse_state(s2)))
 
 			h = rows[i + 1].getchildren()
 			la, ls, rs, ra = h
