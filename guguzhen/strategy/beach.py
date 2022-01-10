@@ -12,9 +12,9 @@ class _NOPCleaner:
 
 
 class CardCleaner:
-	"""清理卡片"""
+	"""清理卡片,正在使用的卡片不会被删除"""
 
-	def __init__(self, rules, protect=()):
+	def __init__(self, rules, protect=frozenset()):
 		self.rules = rules
 		self.protect = protect
 
@@ -22,14 +22,21 @@ class CardCleaner:
 		self.clean(api, api.character.get_cards(), 2 ** 31)
 
 	def clean(self, api: GuGuZhen, cards: Sequence[Card], count: int):
-		cards = [x for x in cards if x not in self.protect]
+		removable = []
+
+		for card in cards:
+			if card.id in self.protect:
+				continue
+			if card.in_use:
+				continue
+			removable.append(card)
 
 		for rule in self.rules:
 			if count <= 0:
 				return
-			es = rule.run(api, cards.copy(), count)
+			es = rule(api, removable.copy(), count)
 			for eliminated in es:
-				cards.remove(eliminated)
+				removable.remove(eliminated)
 				count -= 1
 				api.character.delete_card(eliminated)
 
@@ -42,7 +49,7 @@ class CardCleaner:
 	def level(
 			roles: AbstractSet[Role] = UniversalSet(),
 			skills: int = 0,
-			offset: int = -math.inf,
+			offset: int = math.inf,
 	):
 		"""
 		优先选用技能点多的卡片，也能简单地根据角色和技能位过滤。
@@ -54,7 +61,9 @@ class CardCleaner:
 		"""
 
 		def filter_weak_cards(api, cards, count):
-			threshold = api.get_user().level + 200 + offset
+			threshold = api.get_user().level + 200
+			threshold = (threshold * 1.08) - offset
+
 			for card in cards:
 				lvs = card.lv_max * (1 + card.quality)
 
@@ -78,7 +87,6 @@ class EC:
 
 	def run(self, api: GuGuZhen):
 		all = api.items.get_info()
-
 
 
 class PickBeach:
