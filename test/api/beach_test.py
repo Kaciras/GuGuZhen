@@ -1,4 +1,6 @@
-from guguzhen.api import RandomCard, Equipment, Grade, EquipAttr
+import pytest
+
+from guguzhen.api import RandomCard, Equipment, Grade, EquipAttr, LimitReachedError
 
 
 def test_next_time(api, fyg_server):
@@ -14,6 +16,18 @@ def test_pick_card(api, fyg_server):
 	fyg_server.mock_res(content="新的卡片已放入你的卡片栏，请查看。ok")
 	api.beach.pick(8964)
 	fyg_server.verify_click(c="1", id="8964")
+
+
+def test_pick_card_full(api, fyg_server):
+	fyg_server.mock_res(content="卡片栏已满，请先清理无用卡片。")
+	with pytest.raises(LimitReachedError):
+		api.beach.pick(8964)
+
+
+def test_pick_equip_full(api, fyg_server):
+	fyg_server.mock_res(content="背包已满。无法放入新装备。")
+	with pytest.raises(LimitReachedError):
+		api.beach.pick(8964)
 
 
 def test_get_beach(api, fyg_server):

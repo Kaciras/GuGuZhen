@@ -186,7 +186,7 @@ class CharacterApi:
 		"""删除指定的卡片"""
 		if isinstance(card, Card):
 			card = card.id
-		text = self.api.fyg_click(ClickType.SwitchCard, id=card)
+		text = self.api.fyg_click(ClickType.DeleteCard, id=card)
 		if text.startswith("你没有"):
 			raise FygAPIError("你没有这张卡片或已经装备中")
 

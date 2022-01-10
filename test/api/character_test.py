@@ -53,3 +53,9 @@ def test_get_cards(api, fyg_server):
 	assert cards[3] == Card(1462388, 0, "艾", 351, 3, 0.03, False)
 
 	fyg_server.verify_read(f="8")
+
+
+def test_delete_card(api, fyg_server):
+	fyg_server.mock_res(content="该卡片已删除，被删除卡片的50%经验(5000)已给予当前装备的卡片。")
+	api.character.delete_card(1455897)
+	fyg_server.verify_click(c="11", id="1455897")

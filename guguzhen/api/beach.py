@@ -61,8 +61,8 @@ class BeachApi:
 		"""
 		text = self.api.fyg_click(ClickType.PickUp, id=bc_id)
 
-		if text.startswith("背包已满"):
-			raise LimitReachedError("背包已满")
+		if text.startswith("背包已满") or text.startswith("卡片栏已满"):
+			raise LimitReachedError(text)
 		if not text.endswith("ok"):
 			raise FygAPIError("拾取失败：" + text)
 
