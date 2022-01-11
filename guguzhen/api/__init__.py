@@ -13,7 +13,7 @@ from .beach import BeachApi
 from .character import CharacterApi, Talent, TalentPanel, Card, EquipConfig, Role
 from .gift import GiftApi, Gift, GiftType
 from .items import (
-	Equipment, Amulet, EquipAttr, AmuletAttr,
+	Equipment, Amulet, EquipAttr, AmuletAttr, EquipType,
 	ItemApi, ItemsInfo, Item, Grade, RandomCard
 )
 from .pk import VS, PKInfo, PKApi, Player, Creep, CreepType, Trophy, PKRank, Action, Battle

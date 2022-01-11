@@ -1,7 +1,7 @@
 import re
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Dict, Optional, Sequence
+from typing import Dict, Optional, Sequence, Literal
 
 from lxml import etree
 
@@ -19,6 +19,28 @@ _fc_re = re.compile(r"获得(\d+)水果核")
 
 _onclick_id = re.compile(r"\('?(\d+)'?[,)]")
 
+EquipType = Literal[
+	"探险者短仗",
+	"光辉法杖",
+	"探险者之剑",
+	"陨铁重剑",
+	"狂信者的荣誉之刃",
+	"幽梦匕首",
+	"荆棘剑盾",
+	"探险者手套",
+	"秃鹫手套",
+	"命师的传承手环",
+	"旅法师的灵光袍",
+	"探险者头巾",
+	"占星师的发饰",
+	"天使缎带",
+	"战线支撑者的荆棘重甲",
+	"探险者短弓",
+	"反叛者的刺杀弓",
+	"探险者布甲",
+	"探险者皮甲",
+	"探险者铁甲",
+]
 
 # 随机卡片没属性，直接用个对象来标识
 RandomCard = object()
@@ -38,9 +60,9 @@ class Grade(IntEnum):
 class EquipAttr:
 	"""装备的一条属性"""
 
-	type: str   			# 属性名
-	ratio: float  			# 倍率
-	value: int | float 		# 属性值，若是百分比则为 float
+	type: str   				# 属性名
+	ratio: float  				# 倍率
+	value: int | float 			# 属性值，若是百分比则为 float
 
 	def __str__(self):
 		if isinstance(self.value, int):
@@ -53,8 +75,8 @@ class EquipAttr:
 class AmuletAttr:
 	"""护身符的一条属性"""
 
-	type: str				# 增加的属性
-	value: int | float		# 增加量，若是百分比则为 float
+	type: str					# 属性名
+	value: int | float			# 增加量，若是百分比则为 float
 
 	def __str__(self):
 		if isinstance(self.value, int):
@@ -78,7 +100,7 @@ class Equipment:
 	"""装备物品，如果是 PK 记录则后两个属性为 None"""
 
 	grade: Grade							# 装备品质
-	name: str								# 物品名
+	name: EquipType							# 物品名
 	level: int								# 装备等级
 
 	attrs: Optional[Sequence[EquipAttr]]	# 属性列表
@@ -91,9 +113,9 @@ Item = Amulet | Equipment
 
 @dataclass(eq=False)
 class ItemsInfo:
-	size: int					 	# 当前背包容量（可能超出限制）
-	backpacks: Dict[int, Item]	 	# 背包物品
-	repository: Dict[int, Item]  	# 仓库物品
+	size: int					 		# 当前背包容量（可能超出限制）
+	backpacks: Dict[int, Item]	 		# 背包物品
+	repository: Dict[int, Item]  		# 仓库物品
 
 
 def _parse_item_list(buttons):
