@@ -59,6 +59,7 @@ class ClickType(Enum):
 	Throw = 7			# 丢弃到沙滩
 	OpenGift = 8	 	# 点好运奖励的卡片
 	Destroy = 9	 		# 销毁护身符
+	LevelUp = 10	 	# 升级卡片
 	DeleteCard = 11	 	# 销毁护身符
 	RefreshBeach = 12   # 强制刷新海滩，每次 5 星沙
 	Rejuvenate = 13		# 恢复体力到 100

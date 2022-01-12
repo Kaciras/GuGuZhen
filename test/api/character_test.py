@@ -1,6 +1,17 @@
 import pytest
 
-from guguzhen.api import Talent, Card, FygAPIError
+from guguzhen.api import Talent, Card, FygAPIError, Properties
+
+
+def test_get_current(api, fyg_server):
+	fyg_server.mock_res("ReadCardDetail.html")
+
+	card = api.character.get_current_card()
+	assert card.id == 1436389
+	assert card.in_use
+	assert card.props == Properties(1, 350, 300, 1, 421, 1)
+
+	fyg_server.verify_read(f="18", zid="mi")
 
 
 def test_get_info(api, fyg_server):

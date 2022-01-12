@@ -1,0 +1,79 @@
+
+    <div class="row"><div class="col-md-4">
+    <div class="btn btn-primary" onclick="xxcard(1436389)" style="color:#9999ff;width:100%;background:url(ys/kp_bg.gif) no-repeat;">
+        <div class="row"><div class="col-xs-5 fyg_tl">
+        <span class="fyg_f18">336</span> 级
+        </div><div class="col-xs-5">
+        </div><div class="col-xs-2 fyg_f18 fyg_tr">梦
+        </div></div>
+        <div class="fyg_tl" style="margin-bottom:17px;">
+        336 最大等级<br>2 技能位<br>6% 品质
+        </div>
+    <p class="with-padding hl-danger fyg_tc" data-toggle="popover" data-placement="bottom" data-trigger="hover" data-content="主动技能，给对方增加7层星芒，造成(星芒*魔法攻击*20%)的魔法伤害，并减速对方(星芒层数*0.5%的攻击速度)。">星轮逆转</p>
+    <p class="with-padding hl-default fyg_tc" data-toggle="popover" data-placement="bottom" data-trigger="hover" data-content="护盾能量最大值+30%，每次被攻击给对方施放1层星芒，并减速对方(攻击速度的2%)。">星芒之盾</p>
+    <p class="with-padding hl-default fyg_tc" data-toggle="popover" data-placement="bottom" data-trigger="hover" data-content="每次攻击给对方施放2层星芒，每次攻击附带(星芒层数对应的魔法伤害)，每层星芒的伤害为自身护盾最大值的3%。并减速对方(攻击速度的1%)。">占星之芒</p>
+    </div>
+    
+    </div><div class="col-md-6">
+        <button class="btn btn-lg btn-block" type="button" onclick="eqlip(2),eqbp(2)"><i class="icon icon-share-alt icon-rotate-270"></i> 返回 <角色卡片> 列表</button>
+        <button class="btn btn-success btn-lg btn-block" type="button"><i class="icon icon-check-circle-o"></i> 本卡片装备中</button>
+        <button disabled class="btn btn-lg btn-block fyg_tl" type="button" onclick="cmaxup(1436389,1)"><i class="icon icon-arrow-up"></i> 升 1 级 (消耗 -28270 贝壳)</button>
+        <button disabled class="btn btn-lg btn-block fyg_tl" type="button" onclick="cmaxup(1436389,10)"><i class="icon icon-arrow-up"></i> 升 10 级 (消耗 33200 贝壳)</button>
+        <button disabled class="btn btn-lg btn-block fyg_tl" type="button" onclick="cmaxup(1436389,999)"><i class="icon icon-arrow-up"></i> 升 至满 336 级 (消耗 -35000 贝壳)</button>
+    </div><div class="col-md-2">
+        <button class="btn btn-lg btn-block" type="button" onclick="delcard(1436389)">删除本卡片</button>
+        <hr>
+        <button type="button" class="btn btn-info btn-block dropdown-toggle" data-toggle="dropdown"><i class="icon icon-diamond"> 重置加点<br>(本卡片的可分配点)<br>消耗 100000贝壳</i></button><ul class="dropdown-menu" role="menu"><li><a href="###" style="color:#EA644A;" onclick="gx_cxjd(1436389)">确认重新加点</a></li></ul>
+    </div></div>
+    <hr>
+    <div class="btn-group"><span class="with-padding bg-default">可分配点</span><span id="shengyu" class="with-padding bg-success"></span> <span class="with-padding bg-default">总属性点</span><span id="zuida" class="with-padding bg-danger">1074</span> <span class="with-padding bg-default">已分配点</span><span id="zonghe" class="with-padding bg-primary"></span></div>
+    <hr>
+	<div class="row">
+	<div class="col-md-3"><div class="input-group" data-toggle="tooltip" title="每点力量 +10基础物理攻击力 +0.5%基础生命值 +1物理附加穿透 每100力量+1%生命回复">
+      <input type="number" class="form-control" id="sjll" value="1" onchange="statainput()">
+      <span class="input-group-addon">力量</span>
+   </div></div>
+	<div class="col-md-9"><div class="progress">
+ 		<div id="sjj1" class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:1%;">1</div>
+	</div></div>
+	<div class="col-md-3"><div class="input-group" data-toggle="tooltip" title="每点敏捷 +3基础速度 +爆击概率">
+      <input type="number" class="form-control" id="sjmj" value="350" onchange="statainput()">
+      <span class="input-group-addon">敏捷</span>
+   </div></div>
+	<div class="col-md-9"><div class="progress">
+ 		<div id="sjj2" class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:1%">350</div>
+	</div></div>
+	<div class="col-md-3"><div class="input-group" data-toggle="tooltip" title="每点智力 +12基础魔法攻击力 +技能概率 +1魔法附加穿透 每70智力+1%护盾回复">
+      <input type="number" class="form-control" id="sjzl" value="300" onchange="statainput()">
+      <span class="input-group-addon">智力</span>
+   </div></div>
+	<div class="col-md-9"><div class="progress">
+ 		<div id="sjj3" class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:1%">300</div>
+	</div></div>
+	<div class="col-md-3"><div class="input-group" data-toggle="tooltip" title="每点体魄 +3.5物理防御 +35生命值">
+      <input type="number" class="form-control" id="sjtp" value="1" onchange="statainput()">
+      <span class="input-group-addon">体魄</span>
+   </div></div>
+	<div class="col-md-9"><div class="progress">
+ 		<div id="sjj4" class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:1%">1</div>
+	</div></div>
+	<div class="col-md-3"><div class="input-group" data-toggle="tooltip" title="每点精神 +70能量护盾 +0.5物理防御 +0.5魔法防御">
+      <input type="number" class="form-control" id="sjjs" value="421" onchange="statainput()">
+      <span class="input-group-addon">精神</span>
+   </div></div>
+	<div class="col-md-9"><div class="progress">
+ 		<div id="sjj5" class="progress-bar" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:1%">421</div>
+	</div></div>
+	<div class="col-md-3"><div class="input-group" data-toggle="tooltip" title="每点意志 +3.5魔法防御 +35生命值">
+      <input type="number" class="form-control" id="sjyz" value="1" onchange="statainput()">
+      <span class="input-group-addon">意志</span>
+   </div></div>
+	<div class="col-md-9"><div class="progress">
+ 		<div id="sjj6" class="progress-bar progress-bar-info" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width:1%">1</div>
+	</div></div>
+
+	</div>
+	<button class="btn btn-block btn-lg btn-warning" type="button" onclick="updstat(1436389)"><i class="icon icon-edit icon-2x"></i> 保存加点 (分配了升级点数后请点击这里保存)</button>
+        
+        </div>
+    

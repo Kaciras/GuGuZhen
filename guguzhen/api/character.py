@@ -1,4 +1,5 @@
 import re
+from collections import namedtuple
 from dataclasses import dataclass
 from enum import Enum
 from typing import Iterable, Literal
@@ -82,8 +83,19 @@ class EquipConfig:
 	accessory: Equipment	 # 发饰
 
 
-@dataclass(frozen=True, slots=True)
+Properties = namedtuple("Properties", [
+	"str",		# 力量
+	"agi",		# 敏捷
+	"int",		# 智力
+	"con",		# 体魄
+	"men",		# 精神
+	"vit",		# 意志
+])
+
+@dataclass(eq=False, slots=True)
 class Card:
+	"""卡片对象，部分属性仅在卡片详情中有效"""
+
 	id: int				# 卡片 ID
 	level: int			# 等级
 	role: Role			# 职业
@@ -91,6 +103,40 @@ class Card:
 	skills: int			# 技能位
 	quality: float		# 品质
 	in_use: bool 		# 使用中？
+
+	props: Properties = None	# 加点
+
+	def level_up_cost(self, to: int):
+		"""升到指定等级所需的贝壳"""
+		if to == 1 and self.level == 0:
+			return 9
+		return (to ** 2 - self.level ** 2) * 10
+
+	@property
+	def final_level(self):
+		"""品质换算后的等级"""
+		return self.level * (1 + self.quality)
+
+	@property
+	def final_lv_max(self):
+		"""品质换算后的最大等级"""
+		return self.lv_max * (1 + self.quality)
+
+	@property
+	def gp_max(self):
+		"""该卡最大能有多少属性点"""
+		return int(6 + self.final_lv_max * 3)
+
+	@property
+	def gp(self):
+		"""总属性点"""
+		return int(6 + self.final_level * 3)
+
+	def gp_free(self):
+		"""可分配点"""
+		if self.props is None:
+			raise ValueError("当前卡片未包含加点信息")
+		return self.gp - sum(self.props)
 
 	def __str__(self):
 		parts = [
@@ -123,6 +169,17 @@ def _parse_card(div: etree.ElementBase):
 		float(match.group(3)) / 100,
 		attrs.find("当前使用中") > 0
 	)
+
+
+def _parse_card_detail(html: etree.ElementBase):
+	card = _parse_card(html.find("body/div[1]/div/div"))
+	card.in_use = html.find("body/div[1]/div[2]/button[2]/i").tail == " 本卡片装备中"
+
+	props = html.findall("body/div[3]/div")
+	props = [int(e.find("div/div").text) for e in props[1::2]]
+	card.props = Properties(*props)
+
+	return card
 
 
 class CharacterApi:
@@ -168,6 +225,16 @@ class CharacterApi:
 
 		return tuple(map(_parse_card, html.iterfind("body/div")))
 
+	def get_current_card(self, card:  Card | int | None = None):
+		"""查看卡片的详细信息（加点等），参数如果为 None 则查看使用中的卡片"""
+		if card is None:
+			card = "mi"
+		if isinstance(card, Card):
+			card = card.id
+
+		html = self.api.fyg_read(ReadType.CardDetail, zid=card)
+		return _parse_card_detail(html = etree.HTML(html))
+
 	def switch_card(self, card: Card | int):
 		"""装备指定的卡片"""
 		if isinstance(card, Card):
@@ -175,6 +242,19 @@ class CharacterApi:
 		text = self.api.fyg_click(ClickType.SwitchCard, id=card)
 		if text != "ok":
 			raise FygAPIError("换卡失败：" + text)
+
+	def level_up(self, card: Card | int, value: int):
+		"""
+		升级卡片，所需的贝壳可用 Card.level_up_cost() 计算。
+
+		:param card: 卡片或其 ID
+		:param value: 升多少级
+		"""
+		if isinstance(card, Card):
+			card = card.id
+		text = self.api.fyg_click(ClickType.LevelUp, num=card, up=value)
+		if not text.startswith("卡片已升级"):
+			raise FygAPIError(text)
 
 	def rebuild(self, card: Card | int):
 		"""重置卡片的加点"""
