@@ -1,29 +1,59 @@
 from collections import defaultdict
+from dataclasses import dataclass, fields
 from itertools import chain
 
-from guguzhen.api import GuGuZhen, Talent
+from guguzhen.api import GuGuZhen, Talent, ItemsInfo
 from guguzhen.helper import item_hash
 
+# 4个元素分别是武器、手部、衣服、发饰的 Hash，为 None 的元素表示不换（咕咕镇好像不能卸下装备）
 EquipTuple = list[str, str, str, str]
 
+_NE = (None,) * 4
 
+@dataclass(eq=False)
 class CharacterPreset:
+	"""
+	角色配置，定义了所使用的卡片、天赋、装备、背包护身符，运行该策略将切换它们。
+	该策略可用于一键换装（和护身符、卡片等等）。
 
-	def __init__(self, card_id: int = None,
-				 halo: list[Talent] = None,
-				 equipment: EquipTuple = None,
-				 backpack: list[str] = None):
-		self.card_id = card_id
-		self.halo = halo
-		self.equipment = equipment
-		self.backpack = backpack
+	装备和背包使用物品的 Hash，为 None 的属性表示不换。
+	"""
+
+	card_id: int = None  			# 卡片的 ID
+	talent: list[Talent] = None		# 光环天赋
+	equipment: EquipTuple = _NE		# 装备
+	backpack: list[str] = None		# 背包（超出容量的部分将忽略）
+
+	@staticmethod
+	def snapshot(api: GuGuZhen):
+		"""获取当前的配置"""
+		zid = api.character.get_current_card().id
+
+		talent = api.character.get_talent().talent
+
+		bp = api.items.get_info().backpacks
+		bp = [item_hash(x) for x in bp.values()]
+
+		eq = api.character.get_info()
+		eq_list = []
+		for f in fields(eq):
+			v = getattr(eq, f.name)
+			if v:
+				eq_list.append(item_hash(v))
+			else:
+				eq_list.append(None)
+
+		return CharacterPreset(zid, talent, eq_list, bp)
+
+	def has_change(self, other):
+		""""""
 
 	def run(self, api: GuGuZhen):
 		if self.card_id:
 			api.character.switch_card(self.card_id)
 
-		if self.halo is not None:
-			api.character.set_halo(self.halo)
+		if self.talent is not None:
+			api.character.set_talent(self.talent)
 
 		# 切换装备和背包，
 		ctx = ItemSwitchContext(api)
@@ -39,25 +69,30 @@ class CharacterPreset:
 		out_list, reaming = [], 0
 		ctx.refresh()
 
-		for h in self.backpack:
-			ids = ctx.bp_map[h]
-			if ids:
-				reaming += 1
-				ids.pop()
-			else:
-				out_list.append(h)
+		if self.backpack:
 
-		for id_ in chain.from_iterable(ctx.bp_map.values()):
-			api.rest()
-			api.items.put_in(id_)
-			print(f"{id_} [背包] -> [仓库]") # 4416100
+			for h in self.backpack:
+				ids = ctx.bp_map[h]
+				if ids:
+					reaming += 1
+					ids.pop()
+				else:
+					out_list.append(h)
 
-		free = ctx.items.size - reaming
-		for h in out_list[:free]:
-			api.rest()
-			id_ = ctx.rp_map[h].pop()
-			api.items.put_out(id_)
-			print(f"{id_} [仓库] -> [背包]")
+			for id_ in chain.from_iterable(ctx.bp_map.values()):
+				api.rest()
+				api.items.put_in(id_)
+				print(f"{id_} [背包] -> [仓库]")
+
+			ctx.refresh()
+
+			free = ctx.items.size - reaming
+			for h in out_list[:free]:
+				api.rest()
+				id_ = ctx.rp_map[h].pop()
+				api.items.put_out(id_)
+				ctx.refresh()
+				print(f"{id_} [仓库] -> [背包]")
 
 
 class ItemSwitchContext:
@@ -70,12 +105,13 @@ class ItemSwitchContext:
 		self.bp_map = defaultdict(list)
 		self.rp_map = defaultdict(list)
 		self.items = None
-
-		self.config = api.character.get_info()
 		self.refresh()
 
 	def refresh(self):
-		items = self.items = self.api.items.get_info()
+		self._update_items_state(self.api.items.get_info())
+
+	def _update_items_state(self, items: ItemsInfo):
+		self.items = items
 		self.bp_map.clear()
 		self.rp_map.clear()
 
@@ -84,16 +120,28 @@ class ItemSwitchContext:
 		for id_, e in items.repository.items():
 			self.rp_map[item_hash(e)].append(id_)
 
+	def ensure_slot(self):
+		"""
+		在背包中腾一个位置，背包物品数可能大于实际容量
+		"""
+		i, api = self.items, self.api
+
+		while len(i.backpacks) >= i.size:
+			ids = i.backpacks.keys()
+			api.rest()
+			api.items.put_in(next(iter(ids)))
+			i = api.items.get_info()
+
+		self._update_items_state(i)
+
 	def r2b(self, hash_):
 		"""
+		Repository to backpack
 
-		:param hash_:
-		:return:
+		:param hash_: 物品的 Hash
+		:return: 物品在背包中的 ID
 		"""
-		bp = self.items.backpacks
-		if len(bp) >= self.items.size:
-			v = bp.popitem()[0]
-			self.api.items.put_in(v)
+		self.ensure_slot()
 
 		id_ = self.rp_map[hash_][0]
 		self.api.rest()
@@ -109,3 +157,4 @@ class ItemSwitchContext:
 			id_ = self.r2b(hash_)
 
 		self.api.items.put_on(id_)
+		self.refresh()
