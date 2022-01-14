@@ -11,8 +11,9 @@ EquipTuple = list[str, str, str, str]
 
 _NE = (None,) * 4
 
+
 @dataclass(eq=False)
-class CharacterPreset(AbstractStrategy):
+class ChangeProfile(AbstractStrategy):
 	"""
 	角色配置，定义了所使用的卡片、天赋、装备、背包护身符，运行该策略将切换它们。
 	该策略可用于一键换装（和护身符、卡片等等）。
@@ -37,40 +38,38 @@ class CharacterPreset(AbstractStrategy):
 
 		eq = api.character.get_info()
 		eq_list = []
-		for f in fields(eq):
-			v = getattr(eq, f.name)
+		for v in as_values(eq):
 			if v:
 				eq_list.append(item_hash(v))
 			else:
 				eq_list.append(None)
 
-		return CharacterPreset(zid, talent, eq_list, bp)
-
-	def has_change(self, other):
-		""""""
+		return ChangeProfile(zid, talent, eq_list, bp)
 
 	def run(self, api: GuGuZhen):
-		if self.card_id:
-			api.character.switch_card(self.card_id)
+		card_s = api.character.get_current_card()
+		talent_s = api.character.get_talent().talent
+		c, t = self.card_id, self.talent
 
-		if self.talent is not None:
-			api.character.set_talent(self.talent)
+		if c and c != card_s.id:
+			api.character.switch_card(c)
 
-		# 切换装备和背包，
+		if (t is not None) and t != talent_s:
+			api.character.set_talent(t)
+
 		ctx = ItemSwitchContext(api)
 
 		# 先换装备
-		config = api.character.get_info()
-		s = (config.weapon, config.bracelet, config.armor, config.accessory)
+		s = as_values(api.character.get_info())
 		for i, e in enumerate(self.equipment):
+			if e is None:
+				continue
 			if item_hash(s[i]) != e:
 				api.rest()
 				ctx.put_on(e)
 
-		out_list, reaming = [], 0
-		ctx.refresh()
-
 		if self.backpack:
+			out_list, reaming = [], 0
 
 			for h in self.backpack:
 				ids = ctx.bp_map[h]
@@ -81,12 +80,12 @@ class CharacterPreset(AbstractStrategy):
 					out_list.append(h)
 
 			for id_ in chain.from_iterable(ctx.bp_map.values()):
-				api.rest()
 				api.items.put_in(id_)
 				print(f"{id_} [背包] -> [仓库]")
 
 			ctx.refresh()
 
+			# 这里似乎不能换太快，否则报错背包已满
 			free = ctx.items.size - reaming
 			for h in out_list[:free]:
 				api.rest()
@@ -105,7 +104,6 @@ class ItemSwitchContext:
 		self.api = api
 		self.bp_map = defaultdict(list)
 		self.rp_map = defaultdict(list)
-		self.items = None
 		self.refresh()
 
 	def refresh(self):

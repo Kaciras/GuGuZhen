@@ -1,8 +1,8 @@
 import logging
 from enum import Enum
 
-from .character import CharacterPreset
 from .core import NopStrategy, AbstractStrategy
+from .profile import ChangeProfile
 from ..api import GuGuZhen, VS, PKInfo
 
 
@@ -24,8 +24,8 @@ class PK(AbstractStrategy):
 
 	def __init__(
 			self,
-			pve: CharacterPreset = _NO_CHANGE,
-			pvp: CharacterPreset = _NO_CHANGE,
+			pve: ChangeProfile = _NO_CHANGE,
+			pvp: ChangeProfile = _NO_CHANGE,
 			mode=_Mode.Default):
 		self.pve = pve
 		self.pvp = pvp
