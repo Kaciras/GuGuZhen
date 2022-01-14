@@ -108,9 +108,8 @@ class Card:
 
 	def level_up_cost(self, to: int):
 		"""升到指定等级所需的贝壳"""
-		if to == 1 and self.level == 0:
-			return 9
-		return (to ** 2 - self.level ** 2) * 10
+		exp = 1 if self.level == 0 else 0
+		return (to ** 2 - self.level ** 2) * 10 - exp
 
 	@property
 	def final_level(self):
@@ -132,6 +131,7 @@ class Card:
 		"""总属性点"""
 		return int(6 + self.final_level * 3)
 
+	@property
 	def gp_free(self):
 		"""可分配点"""
 		if self.props is None:

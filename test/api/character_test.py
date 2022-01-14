@@ -3,6 +3,35 @@ import pytest
 from guguzhen.api import Talent, Card, FygAPIError, Properties
 
 
+class TestCard:
+
+	def test_levelup_cost_0(self):
+		card = Card(114514, 0, "命", 342, 3, 0.03, False)
+
+		assert card.level_up_cost(1) == 9
+		assert card.level_up_cost(10) == 999
+		assert card.level_up_cost(342) == 1169639
+
+	def test_levelup_cost_1(self):
+		card = Card(114514, 12, "薇", 349, 4, 0.01, False)
+
+		assert card.level_up_cost(13) == 250
+		assert card.level_up_cost(22) == 3400
+		assert card.level_up_cost(349) == 1216570
+
+	def test_gp(self):
+		card = Card(114514, 336, "梦", 336, 3, 0.06, True)
+		assert card.gp == 1074
+		assert card.gp_max == 1074
+
+	def test_gp_free(self):
+		props = Properties(1, 17, 1, 18, 1, 1)
+		card = Card(114514, 12, "梦", 349, 4, 0.01, False, props)
+
+		assert card.gp == 42
+		assert card.gp_free == 3
+
+
 def test_get_current(api, fyg_server):
 	fyg_server.mock_res("ReadCardDetail.html")
 
@@ -61,9 +90,16 @@ def test_get_cards(api, fyg_server):
 	cards = api.character.get_cards()
 
 	assert len(cards) == 7
-	assert cards[3] == Card(1462388, 0, "艾", 351, 3, 0.03, False)
-
 	fyg_server.verify_read(f="8")
+
+	assert cards[3].id == 1462388
+	assert cards[3].level == 0
+	assert cards[3].role == "艾"
+	assert cards[3].lv_max == 351
+	assert cards[3].skills == 3
+	assert cards[3].quality == 0.03
+	assert cards[3].in_use == False
+	assert cards[3].props is None
 
 
 def test_delete_card(api, fyg_server):
