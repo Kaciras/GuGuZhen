@@ -1,4 +1,6 @@
-from guguzhen.api import PKRank, VS, Creep, Equipment, Grade
+import pytest
+
+from guguzhen.api import PKRank, VS, Creep, Equipment, Grade, LimitReachedError
 
 
 def test_get_info(api, fyg_server):
@@ -55,6 +57,13 @@ def test_vs_player(api, fyg_server):
 	assert left.HP_health is None
 
 	fyg_server.verify("/fyg_v_intel.php", "POST", id="2", safeid=api.safe_id)
+
+
+def test_pillage_failed(api, fyg_server):
+	fyg_server.mock_res(content="体力不足，需要剩余体力大于等于10。")
+
+	with pytest.raises(LimitReachedError):
+		api.pk.pillage()
 
 
 def test_pillage(api, fyg_server):

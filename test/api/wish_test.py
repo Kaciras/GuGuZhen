@@ -13,3 +13,9 @@ def test_get_info(api, fyg_server):
 	assert info.buffers.战斗用生命药水 == 4
 
 	fyg_server.verify_read(f="19")
+
+
+def test_refresh(api, fyg_server):
+	fyg_server.mock_res(content="许愿池已经重置排列。")
+	api.wishing.shuffle()
+	fyg_server.verify_click(c="19")

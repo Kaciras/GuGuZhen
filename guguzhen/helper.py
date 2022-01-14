@@ -1,5 +1,6 @@
 import math
 from base64 import urlsafe_b64encode
+from dataclasses import fields
 from hashlib import sha256
 from struct import pack
 from typing import AbstractSet
@@ -27,7 +28,7 @@ class UniversalSet(AbstractSet):
 	【与字面量集合的区别】
 	以 Role 为例，字面量随着服务端版本更新可能会改变，比如出了新的角色，
 	如果用 frozenset(get_args(Role)) 无法包含新出的，必须等待程序更新；
-	而全集则没有这个问题，在使用上是有差别的。
+	而全集则没有这个问题，这在使用上是有差别的。
 	"""
 
 	def __len__(self):
@@ -38,6 +39,16 @@ class UniversalSet(AbstractSet):
 
 	def __contains__(self, _):
 		return True
+
+
+def as_values(obj):
+	"""
+	获取数据对象（dataclass）所有字段的值，跟定义时的顺序一致。
+
+	:param obj: 数据对象
+	:return: 所有字段值的列表
+	"""
+	return [getattr(obj, f.name) for f in fields(obj)]
 
 
 def _full_print(items):
@@ -63,13 +74,13 @@ def _print_hash_list(items):
 
 def item_hash(item: Item):
 	"""
-	根据物品的属性生成 hash 值，可用于标识该物品。
+	根据物品的属性生成 Hash 值，可用于标识该物品。
 
 	因为 Python 默认启用了 hash 随机化，因此 hash(obj) 的结果每次运行都不同，
 	让用户添加 PYTHONHASHSEED 变量也不方便，于是就自己实现了。
 
 	:param item: 装备或护身符
-	:return: 8 位 base64 hash 值
+	:return: 8 位 base64 Hash 值
 	"""
 	m = sha256()
 	m.update(item.grade.to_bytes(1, "big"))
@@ -144,7 +155,7 @@ def print_cards(api: GuGuZhen):
 		print(f"{color}{card}{Fore.RESET}")
 
 
-def scan_browser(origin):
+def scan_browser(origin: str):
 	"""
 	扫描系统里安装的浏览器，从中找出指定主机的 Cookies。
 
@@ -154,7 +165,7 @@ def scan_browser(origin):
 	  导致一些 Cookie 只有关闭浏览器后才能获取到。
 
 	:param origin: 主机名
-	:return: 对应站点的 CookieJar
+	:return: 对应站点的 CookieJar，如果找不到则为 None
 	"""
 	browsers = (Chrome, Chromium, Opera, Brave, Edge, Firefox)
 	found = {}
@@ -168,7 +179,9 @@ def scan_browser(origin):
 			pass
 
 	if len(found) == 1:
-		return found.popitem()[1]
+		[name, value] = found.popitem()
+		print(f"在 {name} 中找到了咕咕镇的 Cookies。")
+		return value
 	elif len(found) > 1:
 		msg = "在以下浏览器中找到了 Cookies，复制哪个？"
 		question = inquirer.List("name", msg, found)

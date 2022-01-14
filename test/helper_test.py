@@ -1,7 +1,14 @@
 import pytest
 
 from guguzhen.api import Amulet, Grade, AmuletAttr, Equipment, EquipAttr
-from guguzhen.helper import item_hash
+from guguzhen.helper import item_hash, as_values
+
+
+def test_as_values():
+	attrs = (AmuletAttr("智力", 1), AmuletAttr("速度", 0.01))
+	obj = Amulet(Grade.cyan, "稀有苹果护身符", 1, attrs)
+
+	assert as_values(obj) == [Grade.cyan, "稀有苹果护身符", 1, attrs]
 
 
 def test_hash_incomplete_equip():

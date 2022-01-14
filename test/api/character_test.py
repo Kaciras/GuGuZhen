@@ -32,6 +32,13 @@ class TestCard:
 		assert card.gp_free == 3
 
 
+def test_talent_cost():
+	assert Talent.飓风之力.cost == 100
+	assert Talent.破魔之心.cost == 30
+	assert Talent.启程之风.cost == 10
+	assert Talent.点到为止.cost == 50
+
+
 def test_get_current(api, fyg_server):
 	fyg_server.mock_res("ReadCardDetail.html")
 
