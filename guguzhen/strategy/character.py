@@ -1,9 +1,10 @@
 from collections import defaultdict
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from itertools import chain
 
-from guguzhen.api import GuGuZhen, Talent, ItemsInfo
-from guguzhen.helper import item_hash
+from .core import AbstractStrategy
+from ..api import GuGuZhen, Talent, ItemsInfo
+from ..helper import item_hash, as_values
 
 # 4个元素分别是武器、手部、衣服、发饰的 Hash，为 None 的元素表示不换（咕咕镇好像不能卸下装备）
 EquipTuple = list[str, str, str, str]
@@ -11,7 +12,7 @@ EquipTuple = list[str, str, str, str]
 _NE = (None,) * 4
 
 @dataclass(eq=False)
-class CharacterPreset:
+class CharacterPreset(AbstractStrategy):
 	"""
 	角色配置，定义了所使用的卡片、天赋、装备、背包护身符，运行该策略将切换它们。
 	该策略可用于一键换装（和护身符、卡片等等）。

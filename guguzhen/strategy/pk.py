@@ -1,8 +1,9 @@
 import logging
 from enum import Enum
 
-from guguzhen.api import GuGuZhen, VS, PKInfo
-from guguzhen.strategy import CharacterPreset
+from .character import CharacterPreset
+from .core import NopStrategy, AbstractStrategy
+from ..api import GuGuZhen, VS, PKInfo
 
 
 class _Mode(Enum):
@@ -11,7 +12,10 @@ class _Mode(Enum):
 	PVPOnly = 2		# 只打人不打野。
 
 
-class PK:
+_NO_CHANGE = NopStrategy()
+
+
+class PK(AbstractStrategy):
 	"""
 	自动玩争夺战场，该策略详细的说明见 play.py 中的注释。
 	"""
@@ -20,8 +24,8 @@ class PK:
 
 	def __init__(
 			self,
-			pve: CharacterPreset,
-			pvp: CharacterPreset,
+			pve: CharacterPreset = _NO_CHANGE,
+			pvp: CharacterPreset = _NO_CHANGE,
 			mode=_Mode.Default):
 		self.pve = pve
 		self.pvp = pvp

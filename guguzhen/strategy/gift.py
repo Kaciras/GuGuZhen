@@ -3,6 +3,7 @@ from copy import copy
 from dataclasses import dataclass
 from typing import Sequence
 
+from .core import AbstractStrategy
 from ..api import GuGuZhen
 
 
@@ -15,7 +16,7 @@ class GiftSandRule:
 	limit: int		# 如果需要的星沙大于该值则不翻
 
 
-class GetGift:
+class GetGift(AbstractStrategy):
 
 	def __init__(self, sand_usage: Sequence[GiftSandRule] = ()):
 		self.sand_usage = sand_usage

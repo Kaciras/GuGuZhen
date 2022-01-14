@@ -1,9 +1,10 @@
 import logging
 
-from guguzhen.api import GuGuZhen
+from .core import AbstractStrategy
+from ..api import GuGuZhen
 
 
-class Wish:
+class Wish(AbstractStrategy):
 
 	def __init__(self, times: int):
 		self.times = times

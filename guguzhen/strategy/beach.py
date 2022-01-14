@@ -2,8 +2,9 @@ import logging
 import math
 from typing import Sequence, AbstractSet
 
-from guguzhen.api import GuGuZhen, Card, RandomCard, Role
-from guguzhen.helper import UniversalSet
+from .core import AbstractStrategy
+from ..api import GuGuZhen, Card, RandomCard, Role
+from ..helper import UniversalSet
 
 
 class _NOPCleaner:
@@ -89,7 +90,7 @@ class EC:
 		all = api.items.get_info()
 
 
-class PickBeach:
+class PickBeach(AbstractStrategy):
 
 	def __init__(self, card_cleaner: CardCleaner = _NOPCleaner()):
 		self.card_cleaner = card_cleaner
