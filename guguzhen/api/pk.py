@@ -47,12 +47,19 @@ class PKRank(IntEnum):
 
 @dataclass(slots=True)
 class PKInfo:
-	"""争夺战场里的段位、体力等等信息"""
+	"""争夺战场里的段位、体力等等状态"""
 
-	rank: PKRank	 		# 当前所在段位
-	progress: int	 		# 段位进度
-	power: int		 		# 今日体力
-	strengthen: int			# 野怪附加强度
+	rank: PKRank	 			# 当前所在段位
+	progress: int	 			# 段位进度
+	power: int		 			# 今日体力
+	strengthen: int				# 野怪附加强度
+
+	@property
+	def base_trophy(self):
+		"""该状态下的搜刮奖励基准值，与段位和进度有关"""
+		x = self.rank ** 2 * 200
+		p = self.progress
+		return x * p * 0.0025 + p * 25 + x
 
 
 @dataclass(eq=False, slots=True)

@@ -1,6 +1,16 @@
 import pytest
 
-from guguzhen.api import PKRank, VS, Creep, Equipment, Grade, LimitReachedError
+from guguzhen.api import PKRank, VS, Creep, Equipment, Grade, LimitReachedError, PKInfo
+
+
+@pytest.mark.parametrize("rank,progress,value", [
+	(PKRank.C, 0, 200),
+	(PKRank.C, 45, 1347.5),
+	(PKRank.AAA, 95, 22422.5),
+	(PKRank.SSS, 100, 38500),
+])
+def test_info_base_trophy(rank, progress, value):
+	assert PKInfo(rank, progress, 0, 0).base_trophy == value
 
 
 def test_get_info(api, fyg_server):
