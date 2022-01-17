@@ -1,15 +1,18 @@
+import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from itertools import chain
 
 from .core import AbstractStrategy
 from ..api import GuGuZhen, Talent, ItemsInfo
-from ..helper import item_hash, as_values
+from ..helper import item_hash, as_values, enum_names
 
 # 4个元素分别是武器、手部、衣服、发饰的 Hash，为 None 的元素表示不换（咕咕镇好像不能卸下装备）
 EquipTuple = list[str, str, str, str]
 
 _NE = (None,) * 4
+
+logger = logging.getLogger("Profile")
 
 
 @dataclass(eq=False)
@@ -53,9 +56,11 @@ class ChangeProfile(AbstractStrategy):
 
 		if c and c != card_s.id:
 			api.character.switch_card(c)
+			logger.info(f"切换卡片，ID={c}")
 
 		if (t is not None) and t != talent_s:
 			api.character.set_talent(t)
+			logger.info(f"更改天赋：{enum_names(t)}")
 
 		ctx = ItemSwitchContext(api)
 

@@ -51,6 +51,10 @@ def as_values(obj):
 	return [getattr(obj, f.name) for f in fields(obj)]
 
 
+def enum_names(iter_):
+	return ", ".join(x.name for x in iter_)
+
+
 def _full_print(items):
 	for item in items:
 		c, h = _color_map[item.grade], item_hash(item)

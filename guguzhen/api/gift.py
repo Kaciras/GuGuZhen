@@ -27,6 +27,9 @@ class Gift:
 	def value(self):
 		return self.base * self.ratio
 
+	def __str__(self):
+		return f"{self.type}+{self.base}*{self.ratio:.0%}"
+
 
 class GiftApi:
 

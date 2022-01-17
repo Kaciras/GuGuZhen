@@ -6,6 +6,8 @@ from typing import Sequence
 from .core import AbstractStrategy
 from ..api import GuGuZhen
 
+logger = logging.getLogger("GetGift")
+
 
 @dataclass(eq=False, slots=True)
 class GiftSandRule:
@@ -24,6 +26,10 @@ class GetGift(AbstractStrategy):
 	def run(self, api: GuGuZhen):
 		pool = _GiftContext(api)
 
+		lt = tuple(pool.total.values())
+		lb = tuple(pool.base.values())
+		logger.info(f"今日奖池 - 总共：{lt}，基本：{lb}")
+
 		prev = count = len(pool.opened)
 		if count == 0:
 			pool.open(1, False)
@@ -38,8 +44,6 @@ class GetGift(AbstractStrategy):
 				break
 
 			count = len(pool.opened)
-
-		logging.info(f"好运奖励 - 翻了{count - prev}张卡")
 
 	def _handle_rules(self, pool, index):
 		for rule in self.sand_usage:
@@ -57,7 +61,7 @@ class _GiftContext:
 		self.remaining = None
 		self.opened = None
 
-		self.total = api.gift.get_pool()[0]
+		self.total, self.base = api.gift.get_pool()
 		self._refresh()
 
 	def __getitem__(self, item):

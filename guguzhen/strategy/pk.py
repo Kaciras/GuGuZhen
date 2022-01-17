@@ -14,6 +14,7 @@ class _Mode(Enum):
 
 _NO_CHANGE = NopStrategy()
 
+logger = logging.getLogger("PK")
 
 class PK(AbstractStrategy):
 	"""
@@ -35,11 +36,13 @@ class PK(AbstractStrategy):
 		state = api.pk.get_info()
 		action = self._start
 
+		logger.info(f"开始争夺战场，初始状态：{state}")
+
 		while action is not None:
 			api.rest()
 			action = action(state, api)
 
-		logging.info("争夺战场结束")
+		logger.info(f"争夺战场完毕，结束状态：{state}")
 
 	def _start(self, state: PKInfo, _):
 		if self.mode == _Mode.PVPOnly:
