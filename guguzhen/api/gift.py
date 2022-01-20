@@ -10,7 +10,7 @@ _gp = re.compile(r"(\d+)贝壳[\s+]+(\d+)星沙[\s+]+(\d+)件?装备[\s+]+(\d+)�
 
 _gift_desc = re.compile(r"\s*([^+]+)\+([0-9.]+)\*(\d+)%")
 
-_gxp = re.compile(r"消耗 <b>(\d+)</b> 星沙", re.MULTILINE)
+_sand_cost = re.compile(r"消耗 <b>(\d+)</b> 星沙", re.MULTILINE)
 
 GiftType = Literal["贝壳", "星沙", "装备", "卡片", "光环"]
 
@@ -69,25 +69,25 @@ class GiftApi:
 			"光环": float(base.group(5))
 		}
 
-	def get_gifts(self):
+	def get_opened(self):
 		"""
 		获取所有已打开的礼物，返回 dict[编号，礼物信息] 字典
 		"""
 		html = self.api.fyg_read(ReadType.Gifts)
 		html = etree.HTML(html)
 
-		cards, index = {}, 0
+		opened = {}
 		for i, el in enumerate(html.iterfind(".//button")):
 			match = _gift_desc.match(el.text)
 			if match is None:
 				continue
-			cards[i] = Gift(
+			opened[i] = Gift(
 				match.group(1),
 				float(match.group(2)),
 				float(match.group(3)) / 100
 			)
 
-		return cards
+		return opened
 
 	def open(self, index, use_sand=False):
 		"""
@@ -109,6 +109,6 @@ class GiftApi:
 
 		res_text = self.api.fyg_click(ClickType.OpenGift, **form)
 
-		match = _gxp.search(res_text)
+		match = _sand_cost.search(res_text)
 		if match:
 			raise LimitReachedError()

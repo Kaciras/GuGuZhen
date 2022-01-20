@@ -24,14 +24,25 @@ _safeid_param = re.compile(r"&sf=([0-9a-z]+)", re.MULTILINE)
 
 @dataclass(eq=False)
 class UserInfo:
-	name: str		# 我的游戏名
-	level: int		# 争夺等级
-	couch: int		# 贝壳
-	sand: int		# 星沙
-	crystal: int	# 星晶
+	name: str			# 我的游戏名
+	level: int			# 争夺等级
+	couch: int			# 贝壳
+	sand: int			# 星沙
+	crystal: int		# 星晶
 
 
 class GuGuZhen(FYGClient):
+	"""
+	咕咕镇网页 API 的封装。
+
+	由于功能太多，部分 API 放在了子对象中：
+		pk 			- 争夺战场
+		wishing		- 许愿池
+		character	- 我的角色（卡片和天赋）
+		items		- 我的角色（武器装备）
+		beach		- 海滩收获
+		gift		- 好运奖励
+	"""
 
 	@staticmethod
 	def rest():
@@ -46,6 +57,7 @@ class GuGuZhen(FYGClient):
 		return html.find("body/div/div[2]/div/div/div[2]/div[1]/h3").text
 
 	def get_user(self):
+		"""查询统计信息"""
 		html = self.fyg_read(ReadType.User)
 		lines = etree.HTML(html).findall("body/p/span")
 

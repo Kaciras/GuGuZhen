@@ -16,6 +16,7 @@ _HEADERS = {
 	"Accept-Language": "zh-CN,en-US;q=0.7,en;q=0.3",
 }
 
+
 class ClientVersionError(Exception):
 	"""与服务端版本不匹配"""
 
@@ -47,8 +48,8 @@ class ReadType(Enum):
 
 
 class VS(Enum):
-	Creep = 1		# 打野
-	Player = 2		# 打人
+	Creep = 1			# 打野
+	Player = 2			# 打人
 
 
 class ClickType(Enum):
@@ -148,7 +149,7 @@ class FYGClient:
 		else:
 			raise FygAPIError("safeid 获取失败，请尝试重新登录论坛，或者程序出了 BUG")
 
-	def get_page(self, path):
+	def get_page(self, path: str):
 		r = self.client.get(path)
 		r.raise_for_status()
 		return r.text

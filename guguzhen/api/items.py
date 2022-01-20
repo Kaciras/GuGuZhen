@@ -97,7 +97,7 @@ class Amulet:
 
 @dataclass(frozen=True, slots=True)
 class Equipment:
-	"""装备物品，如果是 PK 记录则后两个属性为 None"""
+	"""装备物品，如果是从 PK 记录获取的则后两个属性为 None"""
 
 	grade: Grade							# 装备品质
 	name: EquipType							# 物品名
@@ -193,6 +193,9 @@ def _get_id(button):
 
 
 class ItemApi:
+	"""
+	我的角色 -> 武器装备相关的 API 集合，因为这部分代码较多所以跟 character 分开了。
+	"""
 
 	def __init__(self, api: FYGClient):
 		self.api = api
@@ -246,7 +249,7 @@ class ItemApi:
 	def destroy(self, bp_id):
 		"""
 		熔炼或销毁物品，该物品必须在背包中。
-		如果物品是装备则熔炼为护身符；是护身符则销毁。
+		如果物品是稀有及以上的装备则熔炼为护身符；是护身符则销毁。
 
 		:param bp_id: 物品在背包中的 ID
 		:return: 如果是熔炼则返回护身符 ID，否则 None
@@ -257,5 +260,5 @@ class ItemApi:
 		except ValueError:
 			match = _fc_re.search(text)
 			if match is None:
-				raise FygAPIError("销毁失败：" + text)
+				raise FygAPIError(text)
 			return int(match.group(1))

@@ -6,8 +6,7 @@ from urllib.parse import urlsplit
 
 import fire
 
-from guguzhen.api import GuGuZhen
-from guguzhen.api.base import ClientVersionError
+from guguzhen.api import *
 from guguzhen.helper import print_cards, print_items, scan_browser
 from play import actions
 

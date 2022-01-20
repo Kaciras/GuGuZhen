@@ -26,7 +26,7 @@ def test_get_pool(api, fyg_server):
 def test_get_gifts(api, fyg_server):
 	fyg_server.mock_res("ReadGifts.html")
 
-	opened = api.gift.get_gifts()
+	opened = api.gift.get_opened()
 
 	assert len(opened) == 1
 	assert opened[0].type == "贝壳"

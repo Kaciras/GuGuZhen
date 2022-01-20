@@ -188,7 +188,7 @@ class CharacterApi:
 		self.api = api
 
 	def get_info(self):
-		"""我的战斗信息"""
+		"""查询我的战斗信息"""
 		html = self.api.fyg_read(ReadType.Character)
 		html = etree.HTML(html)
 
@@ -209,7 +209,11 @@ class CharacterApi:
 		return TalentPanel(halo, tuple(talent))
 
 	def set_talent(self, values: Iterable[Talent]):
-		"""保存光环技能"""
+		"""
+		保存光环技能。
+
+		:param values 技能列表
+		"""
 		arr = ",".join(map(lambda x: str(x.value), values))
 		text = self.api.fyg_click(ClickType.SetTalent, arr=arr)
 
@@ -219,7 +223,7 @@ class CharacterApi:
 			raise FygAPIError("光环技能保存失败：" + text)
 
 	def get_cards(self):
-		"""角色卡片列表"""
+		"""获取角色卡片列表"""
 		html = self.api.fyg_read(ReadType.CardList)
 		html = etree.HTML(html)
 

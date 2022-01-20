@@ -79,7 +79,7 @@ class _GiftContext:
 		self._refresh()
 
 	def _refresh(self):
-		self.opened = self.api.gift.get_gifts()
+		self.opened = self.api.gift.get_opened()
 		self.remaining = copy(self.total)
 
 		for gift in self.opened.values():

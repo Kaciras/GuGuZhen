@@ -21,7 +21,7 @@ def mock_api():
 
 def test_open_free(mock_api):
 	mock_api.gift.get_pool.return_value = (total, total)
-	mock_api.gift.get_gifts.return_value = {}
+	mock_api.gift.get_opened.return_value = {}
 
 	GetGift().run(mock_api)
 
@@ -30,7 +30,7 @@ def test_open_free(mock_api):
 
 def test_not_open_if_no_free(mock_api):
 	mock_api.gift.get_pool.return_value = (total, total)
-	mock_api.gift.get_gifts.return_value = {1: Gift("贝壳", 68532, 3.63)}
+	mock_api.gift.get_opened.return_value = {1: Gift("贝壳", 68532, 3.63)}
 
 	GetGift().run(mock_api)
 
@@ -41,7 +41,7 @@ def test_rule_value(mock_api):
 	action = GetGift([GiftSandRule("卡片", 2, 20), GiftSandRule("光环", 2, 20)])
 	mock_api.gift.get_pool.return_value = (total, total)
 
-	mock_api.gift.get_gifts.side_effect = [
+	mock_api.gift.get_opened.side_effect = [
 		{1: Gift("贝壳", 68532, 3.63)},
 		{1: Gift("贝壳", 68532, 3.63), 2: Gift("光环", 2, 1.23)},
 		{1: Gift("贝壳", 68532, 3.63), 2: Gift("光环", 2, 1.0), 3: Gift("光环", 2.1, 1.23)},
@@ -56,7 +56,7 @@ def test_rule_sand_limit(mock_api):
 	action = GetGift([GiftSandRule("光环", 2, 4)])
 	mock_api.gift.get_pool.return_value = (total, total)
 
-	mock_api.gift.get_gifts.side_effect = [
+	mock_api.gift.get_opened.side_effect = [
 		{1: Gift("贝壳", 68532, 3.63)},
 		{1: Gift("贝壳", 68532, 3.63), 2: Gift("光环", 2, 1.23)},
 	]

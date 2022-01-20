@@ -24,9 +24,6 @@ def _parse_drifting_item(buttons):
 
 
 class BeachApi:
-	"""
-	注意：沙滩的物品虽然也是用的 character.Item 类，但与物品栏中的物品 id 不同。
-	"""
 
 	def __init__(self, api: FYGClient):
 		self.api = api
