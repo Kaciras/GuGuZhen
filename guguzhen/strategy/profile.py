@@ -16,7 +16,7 @@ logger = logging.getLogger("Profile")
 
 
 @dataclass(eq=False)
-class ChangeProfile(AbstractStrategy):
+class Profile(AbstractStrategy):
 	"""
 	角色配置，定义了所使用的卡片、天赋、装备、背包护身符，运行该策略将切换它们。
 	该策略可用于一键换装（和护身符、卡片等等）。
@@ -47,7 +47,7 @@ class ChangeProfile(AbstractStrategy):
 			else:
 				eq_list.append(None)
 
-		return ChangeProfile(zid, talent, eq_list, bp)
+		return Profile(zid, talent, eq_list, bp)
 
 	def run(self, api: GuGuZhen):
 		card_s = api.character.get_current_card()
