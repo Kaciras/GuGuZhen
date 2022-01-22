@@ -31,6 +31,10 @@ class TestCard:
 		assert card.gp == 42
 		assert card.gp_free == 3
 
+	def test_str(self):
+		card = Card(114514, 336, "梦", 336, 3, 0.06, True)
+		assert str(card) == "114514 Lv.336/336 梦 3技能位 6%品质 [使用中]"
+
 
 def test_talent_cost():
 	assert Talent.飓风之力.cost == 100

@@ -3,6 +3,12 @@ import pytest
 from guguzhen.api import FygAPIError
 
 
+def test_rest(api, fyg_server):
+	"""这个似啥好测的，但为了覆盖率还是写一个了"""
+	api.rest()
+	assert fyg_server.httpx_mock.get_requests() == []
+
+
 def test_get_version(api, fyg_server):
 	fyg_server.mock_res("fyg_ulog.html")
 

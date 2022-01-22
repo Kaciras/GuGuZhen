@@ -1,6 +1,10 @@
 import pytest
 
-from guguzhen.api import LimitReachedError
+from guguzhen.api import LimitReachedError, Gift
+
+
+def test_gift_to_str():
+	assert str(Gift("贝壳", 36200, 3.36)) == "贝壳+36200*336%"
 
 
 def test_get_pool(api, fyg_server):
@@ -34,6 +38,14 @@ def test_get_gifts(api, fyg_server):
 	assert opened[0].ratio == 2.5
 
 	fyg_server.verify_read(f="10")
+
+
+def test_open(api, fyg_server):
+	fyg_server.mock_res(content="恭喜你！获得 87966贝壳！")
+
+	api.gift.open(1, True)
+
+	fyg_server.verify_click(c="8", id="1", gx="1")
 
 
 def test_open_limited(api, fyg_server):

@@ -1,6 +1,6 @@
 import pytest
 
-from guguzhen.api import RandomCard, Equipment, Grade, EquipAttr, LimitReachedError
+from guguzhen.api import RandomCard, Equipment, Grade, EquipAttr, LimitReachedError, FygAPIError
 
 
 def test_next_time(api, fyg_server):
@@ -10,6 +10,16 @@ def test_next_time(api, fyg_server):
 
 	assert str(duration) == "21:50:00"
 	fyg_server.verify("/fyg_beach.php")
+
+
+def test_pick_not_exists(api, fyg_server):
+	"""
+	服务端对于不存在的物品都认为是卡片……
+	"""
+	fyg_server.mock_res(content="卡片不存在。")
+
+	with pytest.raises(FygAPIError):
+		api.beach.pick(8964)
 
 
 def test_pick_card(api, fyg_server):
@@ -54,3 +64,12 @@ def test_clear(api, fyg_server):
 	fyg_server.mock_res("ClickClearBeach.html")
 	api.beach.clear()
 	fyg_server.verify_click(c="20")
+
+
+def test_throw_not_exists(api, fyg_server):
+	fyg_server.mock_res(content="只能丢弃背包里的装备")
+
+	with pytest.raises(FygAPIError):
+		api.beach.throw(666)
+
+	fyg_server.verify_click(c="7", id="666")
